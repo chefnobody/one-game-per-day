@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One Game Per Day</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0a;
+      color: #f0f0f0;
+      font-family: 'Courier New', Courier, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 3rem;
+      letter-spacing: 0.05em;
+    }
+
+    .games {
+      list-style: none;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .games li {
+      border-top: 1px solid #222;
+      padding: 1rem 0;
+    }
+
+    .games li:last-child {
+      border-bottom: 1px solid #222;
+    }
+
+    .games a {
+      color: #7eb8f7;
+      text-decoration: none;
+      font-size: 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color 0.15s;
+    }
+
+    .games a:hover {
+      color: #ffffff;
+    }
+
+    .day {
+      font-size: 0.75rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>One Game Per Day</h1>
+  <p class="subtitle">a small experiment in daily game-making</p>
+
+  <ul class="games">
+    <li>
+      <a href="./ball-balance/">
+        Ball Balance
+        <span class="day">Day 001</span>
+      </a>
+    </li>
+  </ul>
+</body>
+</html>
