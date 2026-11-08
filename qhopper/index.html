@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Q*HOPPER</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟠</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#0d0028;overflow:hidden;font-family:'Press Start 2P',monospace}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ── Canvas setup ─────────────────────────────────────────────────────────────
+const c   = document.getElementById('c');
+const ctx = c.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const GW = 480, GH = 360;
+c.width = GW; c.height = GH;
+
+// ── Isometric geometry ───────────────────────────────────────────────────────
+const TW     = 28;   // half-width of tile top face
+const TH     = 14;   // half-height of tile top face
+const CUBE_H = 22;   // side face height
+const STEP_Y = TH + CUBE_H; // 36 — vertical pitch between rows
+const ROWS   = 7;
+const ORIG_X = GW / 2;   // 240
+const ORIG_Y = 50;        // top padding
+
+function tileToScreen(col, row) {
+  return {
+    cx: ORIG_X + (2 * col - row) * TW,
+    cy: ORIG_Y + row * STEP_Y
+  };
+}
+
+function isValid(col, row) {
+  return row >= 0 && row < ROWS && col >= 0 && col <= row;
+}
+
+// direction → grid delta
+function delta(dir) {
+  if (dir === 'ul') return [-1, -1];
+  if (dir === 'ur') return [ 0, -1];
+  if (dir === 'll') return [ 0,  1];
+  if (dir === 'lr') return [ 1,  1];
+}
+
+// ── Level palettes ───────────────────────────────────────────────────────────
+const PALS = [
+  { off:['#5533cc','#3a1f9c','#1e0f5a'], on:['#f0a020','#b06800','#704000'], bg:'#0d0028' },
+  { off:['#1a6632','#0d3d1e','#06200f'], on:['#ff4466','#bb1133','#770011'], bg:'#000e06' },
+  { off:['#004466','#002a40','#001525'], on:['#22ddff','#00aacc','#007799'], bg:'#00060e' },
+  { off:['#662200','#3d1500','#200900'], on:['#88ff44','#55cc22','#2a7700'], bg:'#0d0500' },
+];
+let palIdx = 0;
+let pal    = PALS[0];
+
+// ── Cube state ───────────────────────────────────────────────────────────────
+const cubes = new Map(); // "col,row" → { col, row, lit, danger }
+
+function initCubes() {
+  cubes.clear();
+  for (let r = 0; r < ROWS; r++) {
+    for (let c2 = 0; c2 <= r; c2++) {
+      cubes.set(`${c2},${r}`, { col: c2, row: r, lit: false, danger: false });
+    }
+  }
+  // Seed a few danger tiles (not top 2 rows)
+  const keys = [...cubes.keys()].filter(k => {
+    const cube = cubes.get(k);
+    return cube.row >= 2;
+  });
+  const numDanger = 2 + palIdx;
+  for (let i = 0; i < numDanger; i++) {
+    const k = keys[Math.floor(Math.random() * keys.length)];
+    if (k !== '0,0') cubes.get(k).danger = true;
+  }
+  // Light starting cube
+  cubes.get('0,0').lit = true;
+}
+
+function getCube(col, row) {
+  return cubes.get(`${col},${row}`) || null;
+}
+
+function allLit() {
+  for (const [, cube] of cubes) if (!cube.lit && !cube.danger) return false;
+  return true;
+}
+
+// ── Drawing ──────────────────────────────────────────────────────────────────
+function drawCube(col, row) {
+  const { cx, cy } = tileToScreen(col, row);
+  const cube = getCube(col, row);
+  let topC, leftC, rightC;
+
+  if (cube.danger) {
+    // Pulsing red danger tile
+    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 200);
+    topC   = `hsl(0,90%,${Math.round(30 + pulse * 20)}%)`;
+    leftC  = '#660000';
+    rightC = '#440000';
+  } else if (cube.lit) {
+    topC   = pal.on[0]; leftC  = pal.on[1]; rightC = pal.on[2];
+  } else {
+    topC   = pal.off[0]; leftC = pal.off[1]; rightC = pal.off[2];
+  }
+
+  // Right face
+  ctx.fillStyle = rightC;
+  ctx.beginPath();
+  ctx.moveTo(cx,      cy + TH);
+  ctx.lineTo(cx + TW, cy);
+  ctx.lineTo(cx + TW, cy + CUBE_H);
+  ctx.lineTo(cx,      cy + TH + CUBE_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Left face
+  ctx.fillStyle = leftC;
+  ctx.beginPath();
+  ctx.moveTo(cx - TW, cy);
+  ctx.lineTo(cx,      cy + TH);
+  ctx.lineTo(cx,      cy + TH + CUBE_H);
+  ctx.lineTo(cx - TW, cy + CUBE_H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top face
+  ctx.fillStyle = topC;
+  ctx.beginPath();
+  ctx.moveTo(cx,      cy - TH);
+  ctx.lineTo(cx + TW, cy);
+  ctx.lineTo(cx,      cy + TH);
+  ctx.lineTo(cx - TW, cy);
+  ctx.closePath();
+  ctx.fill();
+
+  // Outlines
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.lineWidth = 1;
+  // top
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - TH); ctx.lineTo(cx + TW, cy);
+  ctx.lineTo(cx, cy + TH); ctx.lineTo(cx - TW, cy);
+  ctx.closePath(); ctx.stroke();
+  // left
+  ctx.beginPath();
+  ctx.moveTo(cx - TW, cy); ctx.lineTo(cx, cy + TH);
+  ctx.lineTo(cx, cy + TH + CUBE_H); ctx.lineTo(cx - TW, cy + CUBE_H);
+  ctx.closePath(); ctx.stroke();
+  // right
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + TH); ctx.lineTo(cx + TW, cy);
+  ctx.lineTo(cx + TW, cy + CUBE_H); ctx.lineTo(cx, cy + TH + CUBE_H);
+  ctx.closePath(); ctx.stroke();
+}
+
+// ── Q*bert character ─────────────────────────────────────────────────────────
+// dir: 'ul','ur','ll','lr'
+function drawQbert(x, y, dir, sq, opacity) {
+  const R = 11;
+  if (opacity === undefined) opacity = 1;
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.translate(Math.round(x), Math.round(y));
+
+  // Squash/stretch
+  const sxScale = 1 + sq * 0.35;
+  const syScale = 1 - sq * 0.45;
+  ctx.scale(sxScale, syScale);
+
+  // Drop shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, R + 2, R * sxScale * 0.7, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  ctx.fillStyle = '#ff8800';
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#cc5500'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Direction-based face offsets
+  const faceOff = {
+    ul: { ex:-3, ey:-2, nx:-3, ny: 3 },
+    ur: { ex: 3, ey:-2, nx: 3, ny: 3 },
+    ll: { ex:-3, ey: 2, nx:-3, ny: 5 },
+    lr: { ex: 3, ey: 2, nx: 3, ny: 5 },
+  }[dir] || { ex:0, ey:0, nx:0, ny:4 };
+
+  // Eyes
+  for (const sx of [-3.5, 2.5]) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(sx + faceOff.ex, -2 + faceOff.ey, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(sx + faceOff.ex + 0.8, -1.5 + faceOff.ey, 1.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Nose
+  ctx.fillStyle = '#ff5533';
+  ctx.beginPath(); ctx.ellipse(faceOff.nx, faceOff.ny, 3, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#cc2200'; ctx.lineWidth = 0.8; ctx.stroke();
+
+  ctx.restore();
+}
+
+// ── Enemy sprite ─────────────────────────────────────────────────────────────
+function drawEnemy(x, y, sq, color) {
+  const R = 10;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.scale(1 + sq * 0.3, 1 - sq * 0.4);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.ellipse(0, R + 2, R * 0.7, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+
+  // Eyes
+  for (const sx of [-3, 3]) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(sx, -2, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(sx + 0.5, -1.5, 1.2, 0, Math.PI * 2); ctx.fill();
+  }
+  // Angry brow
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-5, -5); ctx.lineTo(-1.5, -4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(5, -5);  ctx.lineTo(1.5, -4);  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ── HUD / text helpers ───────────────────────────────────────────────────────
+function px(text, x, y, size, color, align) {
+  ctx.fillStyle = color || '#fff';
+  ctx.font = `${size}px "Press Start 2P", monospace`;
+  ctx.textAlign = align || 'left';
+  ctx.fillText(text, x, y);
+}
+
+function drawBubble(x, y, text) {
+  ctx.save();
+  ctx.font = '8px "Press Start 2P", monospace';
+  const w = ctx.measureText(text).width + 10;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y - 12, w, 16);
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(x, y - 12, w, 16);
+  ctx.fillStyle = '#ff0000'; ctx.textAlign = 'left';
+  ctx.fillText(text, x + 5, y);
+  // Tail
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.moveTo(x + 8, y + 4); ctx.lineTo(x + 3, y + 10); ctx.lineTo(x + 14, y + 4); ctx.fill();
+  ctx.restore();
+}
+
+// ── Audio ─────────────────────────────────────────────────────────────────────
+let AC = null;
+function ensureAudio() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === 'suspended') AC.resume();
+}
+function beep(freq, t, dur, type, vol, freq2) {
+  if (!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, AC.currentTime + t);
+  if (freq2) o.frequency.exponentialRampToValueAtTime(freq2, AC.currentTime + t + dur);
+  g.gain.setValueAtTime(vol || 0.07, AC.currentTime + t);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + t + dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(AC.currentTime + t); o.stop(AC.currentTime + t + dur + 0.05);
+}
+function sfx(name) {
+  if (!AC) return;
+  if (name === 'hop') {
+    beep(380, 0, 0.04, 'square', 0.07);
+    beep(560, 0.04, 0.07, 'square', 0.09);
+  } else if (name === 'land') {
+    beep(300, 0, 0.03, 'square', 0.06, 220);
+  } else if (name === 'color') {
+    beep(700, 0, 0.05, 'square', 0.08, 1000);
+  } else if (name === 'die') {
+    beep(500, 0, 0.08, 'square', 0.09, 80);
+    beep(200, 0.08, 0.25, 'square', 0.09, 50);
+  } else if (name === 'win') {
+    [523, 659, 784, 1047, 1319].forEach((f, i) => beep(f, i * 0.1, 0.12, 'square', 0.07));
+  } else if (name === 'fall') {
+    beep(600, 0, 0.6, 'sawtooth', 0.06, 40);
+  }
+}
+
+// ── Game state ────────────────────────────────────────────────────────────────
+let state = 'title'; // title | playing | dead | win | gameover
+let score = 0, lives = 3, level = 0;
+let swearTimer = 0;
+
+// Player
+let pCol = 0, pRow = 0, pDir = 'lr';
+let pHop = null;  // null | {fc,fr,tc,tr,t,dir}
+let pSq  = 0;     // squash 0–1
+let pFalling = false, pFallT = 0;
+
+// Enemies
+const enemies = [];
+let enemySpawnT = 3;
+
+// Input queue
+const inputQ = [];
+const keys   = {};
+
+addEventListener('keydown', e => {
+  if (!keys[e.code]) {
+    keys[e.code] = true;
+    ensureAudio();
+
+    if (state === 'title' || state === 'gameover') { startGame(); return; }
+    if (state === 'win') { nextLevel(); return; }
+
+    const map = {
+      ArrowUp:'ur', KeyW:'ur',
+      ArrowLeft:'ul', KeyA:'ul',
+      ArrowDown:'ll', KeyS:'ll',
+      ArrowRight:'lr', KeyD:'lr',
+    };
+    if (map[e.code]) { inputQ.push(map[e.code]); e.preventDefault(); }
+  }
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+
+// Touch: swipe to determine direction
+let touchStart = null;
+c.addEventListener('touchstart', e => {
+  ensureAudio();
+  touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  if (state === 'title' || state === 'gameover') startGame();
+  e.preventDefault();
+}, { passive: false });
+c.addEventListener('touchend', e => {
+  if (!touchStart) return;
+  const dx = e.changedTouches[0].clientX - touchStart.x;
+  const dy = e.changedTouches[0].clientY - touchStart.y;
+  touchStart = null;
+  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
+  // Map swipe to isometric direction
+  if (Math.abs(dx) > Math.abs(dy)) {
+    inputQ.push(dx > 0 ? 'lr' : 'ul');
+  } else {
+    inputQ.push(dy > 0 ? 'll' : 'ur');
+  }
+  e.preventDefault();
+}, { passive: false });
+
+// ── Game lifecycle ────────────────────────────────────────────────────────────
+function startGame() {
+  score = 0; lives = 3; level = 0; palIdx = 0; pal = PALS[0];
+  beginLevel();
+}
+
+function beginLevel() {
+  initCubes();
+  pCol = 0; pRow = 0; pDir = 'lr';
+  pHop = null; pSq = 0; pFalling = false; pFallT = 0;
+  enemies.length = 0;
+  enemySpawnT = 3;
+  inputQ.length = 0;
+  swearTimer = 0;
+  state = 'playing';
+}
+
+function nextLevel() {
+  level++;
+  palIdx = level % PALS.length;
+  pal = PALS[palIdx];
+  beginLevel();
+}
+
+function die() {
+  lives--;
+  swearTimer = 1.4;
+  pHop = null; pFalling = false;
+  sfx('die');
+  if (lives <= 0) {
+    setTimeout(() => { state = 'gameover'; }, 1500);
+  } else {
+    setTimeout(() => {
+      pCol = 0; pRow = 0; pDir = 'lr';
+      pHop = null; pSq = 0; pFalling = false;
+      enemies.length = 0; enemySpawnT = 2;
+      inputQ.length = 0; swearTimer = 0;
+      state = 'playing';
+    }, 1500);
+  }
+  state = 'dead';
+}
+
+// ── Hop mechanics ─────────────────────────────────────────────────────────────
+const HOP_HEIGHT = 38;
+const HOP_SPEED  = 4.5;
+
+function startHop(dir) {
+  const [dc, dr] = delta(dir);
+  const tc = pCol + dc, tr = pRow + dr;
+  pDir = dir;
+  pHop = { fc: pCol, fr: pRow, tc, tr, t: 0, dir };
+  sfx('hop');
+}
+
+function characterScreenPos(col, row, hop, t, hopHeight) {
+  const { cx: fcx, cy: fcy } = tileToScreen(hop ? hop.fc : col, hop ? hop.fr : row);
+  if (!hop) return { x: fcx, y: fcy - TH - 12 };
+  const { cx: tcx, cy: tcy } = tileToScreen(hop.tc, hop.tr);
+  const x = fcx + (tcx - fcx) * t;
+  const arc = -hopHeight * 4 * t * (1 - t);
+  const y = fcy + (tcy - fcy) * t + arc - TH - 12;
+  return { x, y };
+}
+
+// ── Enemy logic ───────────────────────────────────────────────────────────────
+function spawnEnemy() {
+  // Start from a random top-row cube that isn't Q*bert's spot
+  const startCol = Math.random() < 0.5 ? 0 : 0; // always from top
+  enemies.push({
+    col: 0, row: 0,
+    hop: null, hopT: 0,
+    sq: 0,
+    color: ['#cc22cc','#dd4400','#2244dd'][Math.floor(Math.random() * 3)],
+    nextHopDelay: 0.5 + Math.random() * 0.5,
+    dead: false,
+  });
+}
+
+function updateEnemy(e, dt) {
+  if (e.dead) return;
+
+  if (e.hop) {
+    e.hop.t = Math.min(1, e.hop.t + dt * 3.5);
+    if (e.hop.t >= 1) {
+      e.col = e.hop.tc; e.row = e.hop.tr;
+      e.sq = 0.75; e.hop = null;
+      sfx('land');
+      // Fell off?
+      if (!isValid(e.col, e.row)) { e.dead = true; return; }
+      // Hit Q*bert?
+      if (state === 'playing' && e.col === pCol && e.row === pRow && !pHop) die();
+      e.nextHopDelay = 0.4 + Math.random() * 0.5;
+    }
+  } else {
+    e.sq = Math.max(0, e.sq - dt * 5);
+    e.nextHopDelay -= dt;
+    if (e.nextHopDelay <= 0) {
+      // Always hop downward (ll or lr), sometimes toward Q*bert
+      let dir;
+      if (Math.random() < 0.4) {
+        // Chase: pick direction that moves closer to Q*bert
+        const [lc, lr] = [e.col, e.row + 1];
+        const [rc, rr] = [e.col + 1, e.row + 1];
+        const dLeft  = Math.abs(pCol - lc) + Math.abs(pRow - lr);
+        const dRight = Math.abs(pCol - rc) + Math.abs(pRow - rr);
+        dir = dLeft < dRight ? 'll' : 'lr';
+      } else {
+        dir = Math.random() < 0.5 ? 'll' : 'lr';
+      }
+      const [dc, dr] = delta(dir);
+      e.hop = { fc: e.col, fr: e.row, tc: e.col + dc, tr: e.row + dr, t: 0 };
+    }
+  }
+}
+
+// ── Main loop ─────────────────────────────────────────────────────────────────
+let lastT = performance.now();
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+
+  // Background
+  ctx.fillStyle = pal.bg || '#0d0028';
+  ctx.fillRect(0, 0, GW, GH);
+
+  if (state === 'title') {
+    drawTitle(); return;
+  }
+  if (state === 'gameover') {
+    drawGameOver(); return;
+  }
+
+  // ── Update ──────────────────────────────────────────────────────────────────
+  if (state === 'playing') {
+    // Player hop
+    if (pHop) {
+      pHop.t = Math.min(1, pHop.t + dt * HOP_SPEED);
+      if (pHop.t >= 1) {
+        // Landed
+        pCol = pHop.tc; pRow = pHop.tr;
+        pSq = 0.85;
+        sfx('land');
+
+        const cube = getCube(pCol, pRow);
+        if (!cube) {
+          // Fell off the board!
+          sfx('fall'); die();
+        } else if (cube.danger) {
+          // Danger tile!
+          sfx('fall'); die();
+        } else {
+          if (!cube.lit) { cube.lit = true; score += 25; sfx('color'); }
+          // Check enemy collision on landing
+          for (const e of enemies) {
+            if (!e.dead && !e.hop && e.col === pCol && e.row === pRow) { die(); break; }
+          }
+          if (state === 'playing' && allLit()) { state = 'win'; sfx('win'); }
+        }
+        pHop = null;
+      }
+    } else {
+      pSq = Math.max(0, pSq - dt * 6);
+      // Process input
+      if (inputQ.length > 0) {
+        startHop(inputQ.shift());
+      }
+    }
+
+    // Enemy spawn
+    enemySpawnT -= dt;
+    const activeEnemies = enemies.filter(e => !e.dead).length;
+    if (enemySpawnT <= 0 && activeEnemies < 2 + Math.floor(level / 2)) {
+      spawnEnemy();
+      enemySpawnT = 4 + Math.random() * 3 - level * 0.3;
+    }
+
+    // Update enemies
+    enemies.forEach(e => updateEnemy(e, dt));
+    // Prune dead
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      if (enemies[i].dead) enemies.splice(i, 1);
+    }
+  }
+
+  if (state === 'dead') {
+    swearTimer -= dt;
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  // Draw cubes back-to-front
+  for (let r = 0; r < ROWS; r++) {
+    for (let col = 0; col <= r; col++) drawCube(col, r);
+  }
+
+  // Build draw list (Q*bert + enemies), sort by visual row for z-order
+  const drawList = [];
+
+  // Q*bert
+  if (!pFalling) {
+    const { x, y } = characterScreenPos(pCol, pRow, pHop, pHop ? pHop.t : 0, HOP_HEIGHT);
+    const sortRow  = pHop ? pHop.fr + pHop.t : pRow;
+    drawList.push({ type: 'qbert', x, y, sortRow });
+  }
+
+  // Enemies
+  for (const e of enemies) {
+    if (e.dead) continue;
+    const { x, y } = characterScreenPos(e.col, e.row, e.hop, e.hop ? e.hop.t : 0, 32);
+    const sortRow  = e.hop ? e.hop.fr + e.hop.t : e.row;
+    drawList.push({ type: 'enemy', x, y, sortRow, e });
+  }
+
+  drawList.sort((a, b) => a.sortRow - b.sortRow);
+
+  for (const item of drawList) {
+    if (item.type === 'qbert') {
+      const opacity = (state === 'dead' && Math.floor(swearTimer * 8) % 2 === 0) ? 0 : 1;
+      drawQbert(item.x, item.y, pDir, pSq, opacity);
+    } else {
+      drawEnemy(item.x, item.y, item.e.sq, item.e.color);
+    }
+  }
+
+  // Swear bubble on death
+  if (state === 'dead' && swearTimer > 0) {
+    const { cx, cy } = tileToScreen(pCol, pRow);
+    drawBubble(cx + 10, cy - 28, '@!#?@!');
+  }
+
+  // Win flash
+  if (state === 'win') {
+    const flash = Math.sin(now / 80) > 0;
+    if (flash) { ctx.fillStyle = 'rgba(255,255,100,0.15)'; ctx.fillRect(0, 0, GW, GH); }
+  }
+
+  // HUD
+  const totalCubes = [...cubes.values()].filter(c => !c.danger).length;
+  const litCubes   = [...cubes.values()].filter(c => c.lit).length;
+  px(`SCORE ${score}`, 8, 14, 7, '#fff', 'left');
+  px('♥'.repeat(lives), GW - 8, 14, 7, '#ff4444', 'right');
+  px(`LVL ${level + 1}`, GW / 2, 14, 7, '#ffd23f', 'center');
+
+  // Progress bar along bottom
+  const barW = 160, barX = (GW - barW) / 2, barY = GH - 16;
+  ctx.fillStyle = '#333';
+  ctx.fillRect(barX, barY, barW, 6);
+  ctx.fillStyle = pal.on[0];
+  ctx.fillRect(barX, barY, Math.round(barW * litCubes / totalCubes), 6);
+
+  // Controls hint
+  px('← → ↑ ↓ TO HOP', GW / 2, GH - 5, 5, '#555', 'center');
+
+  // Win overlay
+  if (state === 'win') {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, GH / 2 - 40, GW, 80);
+    px('LEVEL CLEAR!', GW / 2, GH / 2 - 12, 12, '#ffd23f', 'center');
+    if (Math.floor(now / 500) % 2 === 0) px('PRESS ANY KEY', GW / 2, GH / 2 + 20, 7, '#fff', 'center');
+  }
+}
+
+// ── Title / Game Over screens ─────────────────────────────────────────────────
+function drawTitle() {
+  ctx.fillStyle = '#0d0028';
+  ctx.fillRect(0, 0, GW, GH);
+
+  // Draw a mini pyramid for decoration
+  ctx.save();
+  const miniPal = PALS[0];
+  for (let r = 0; r < 4; r++) {
+    for (let col = 0; col <= r; col++) {
+      const cx = GW / 2 + (2 * col - r) * 18;
+      const cy = 100 + r * 22;
+      // Right face
+      ctx.fillStyle = miniPal.off[2];
+      ctx.beginPath(); ctx.moveTo(cx, cy+9); ctx.lineTo(cx+18, cy); ctx.lineTo(cx+18, cy+14); ctx.lineTo(cx, cy+23); ctx.closePath(); ctx.fill();
+      // Left face
+      ctx.fillStyle = miniPal.off[1];
+      ctx.beginPath(); ctx.moveTo(cx-18, cy); ctx.lineTo(cx, cy+9); ctx.lineTo(cx, cy+23); ctx.lineTo(cx-18, cy+14); ctx.closePath(); ctx.fill();
+      // Top
+      ctx.fillStyle = miniPal.off[0];
+      ctx.beginPath(); ctx.moveTo(cx, cy-9); ctx.lineTo(cx+18, cy); ctx.lineTo(cx, cy+9); ctx.lineTo(cx-18, cy); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  px('Q*HOPPER', GW / 2, 60, 18, '#ff8800', 'center');
+  ctx.fillStyle = '#ff4466';
+  ctx.font = '8px "Press Start 2P"';
+  ctx.textAlign = 'center';
+  ctx.fillText('a Q*bert tribute', GW / 2, 80);
+
+  ctx.fillStyle = '#aaa';
+  ctx.font = '7px "Press Start 2P"';
+  ctx.fillText('HOP EVERY CUBE TO WIN', GW / 2, 212);
+  ctx.fillText('AVOID ENEMIES & RED TILES', GW / 2, 228);
+  ctx.fillStyle = '#888';
+  ctx.font = '6px "Press Start 2P"';
+  ctx.fillText('↑ UP-RIGHT   ← UP-LEFT', GW / 2, 252);
+  ctx.fillText('↓ DN-LEFT    → DN-RIGHT', GW / 2, 266);
+
+  if (Math.floor(performance.now() / 500) % 2 === 0) {
+    px('PRESS ANY KEY', GW / 2, 310, 9, '#ffd23f', 'center');
+  }
+}
+
+function drawGameOver() {
+  ctx.fillStyle = '#0d0028';
+  ctx.fillRect(0, 0, GW, GH);
+  px('GAME OVER', GW / 2, 140, 16, '#ff2200', 'center');
+  px(`SCORE: ${score}`, GW / 2, 180, 9, '#fff', 'center');
+  px(`LEVEL: ${level + 1}`, GW / 2, 200, 9, '#ffd23f', 'center');
+  if (Math.floor(performance.now() / 500) % 2 === 0) {
+    px('PRESS ANY KEY', GW / 2, 250, 8, '#ff8800', 'center');
+  }
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
