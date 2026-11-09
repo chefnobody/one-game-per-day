@@ -163,6 +163,37 @@ const PALS = [
 ];
 const DANGER_COLS = [0x881100, 0, 0xdd2200, 0, 0x550000, 0];
 
+// ─── Sound Engine ────────────────────────────────────────────────────────────
+const sfx = (() => {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function tone(type, f0, f1, vol, dur, delay = 0) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type;
+    const t = ctx.currentTime + delay;
+    osc.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.start(t); osc.stop(t + dur + 0.01);
+  }
+
+  function resume() { if (ctx.state === 'suspended') ctx.resume(); }
+
+  return {
+    resume,
+    hop()          { resume(); tone('square',   220,  500, 0.12, 0.10); },
+    land()         { resume(); tone('sine',      130,   60, 0.22, 0.09); },
+    flip()         { resume(); tone('triangle',  700, 1100, 0.07, 0.07); },
+    enemyHop()     { resume(); tone('sawtooth',   80,  150, 0.05, 0.09); },
+    death()        { resume(); [0, 0.17, 0.34].forEach((d, i) => tone('sawtooth', 370 - i * 55, 90, 0.17, 0.15, d)); },
+    levelComplete(){ resume(); [261.6, 329.6, 392, 523.3].forEach((f, i) => tone('triangle', f, f, 0.14, 0.18, i * 0.11)); },
+    gameOver()     { resume(); [392, 349.2, 311.1, 261.6].forEach((f, i) => tone('sawtooth', f, f * 0.82, 0.14, 0.28, i * 0.22)); },
+  };
+})();
+
 // ─── Three.js Init ───────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
@@ -506,6 +537,7 @@ function updateEnemy(enemy, now) {
   const baseY = isValid(nc, nr) ? toWP.y + CUBE_H * 0.5 + 0.38 : toWP.y + CUBE_H * 0.5 + 0.38;
   const toV = new THREE.Vector3(toWP.x, baseY, toWP.z);
 
+  sfx.enemyHop();
   enemy.hopPhase = { fromV, toV, startTime: now, toCol: nc, toRow: nr };
 }
 
@@ -529,6 +561,7 @@ function showSwear() {
 function triggerDeath() {
   if (dying) return;
   dying = true;
+  sfx.death();
   lives--;
   updateHUD();
   showSwear();
@@ -552,6 +585,7 @@ function triggerDeath() {
 // ─── Level Complete / Game Over ───────────────────────────────────────────────
 function levelComplete() {
   gameActive = false;
+  sfx.levelComplete();
   score += 500 + level * 150;
   updateHUD();
   setTimeout(() => {
@@ -564,6 +598,7 @@ function levelComplete() {
 
 function gameOver() {
   gameActive = false;
+  sfx.gameOver();
   const ov = document.getElementById('overlay');
   ov.querySelector('h1').textContent = 'GAME OVER';
   ov.querySelector('.sub').innerHTML = `FINAL SCORE: ${score}<br><br>BETTER LUCK NEXT TIME`;
@@ -660,6 +695,7 @@ window.addEventListener('keydown', e => {
   const toV    = new THREE.Vector3(toWP.x,   toWP.y   + CUBE_H * 0.5, toWP.z);
   const destCube = cubeMap.get(`${nc},${nr}`);
 
+  sfx.hop();
   hopPhase = {
     fromV, toV,
     startTime: performance.now(),
@@ -713,8 +749,9 @@ function animate(now) {
         qbertGroup.scale.set(1, 1, 1);
         triggerDeath();
       } else {
+        sfx.land();
         squashT = 0.82; // landing squash
-        lightCube(qCol, qRow);
+        if (lightCube(qCol, qRow)) sfx.flip();
         score += 25;
         updateHUD();
         if (litCount >= totalNonDanger) levelComplete();
@@ -747,6 +784,7 @@ function animate(now) {
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 document.getElementById('start-btn').addEventListener('click', () => {
+  sfx.resume();
   score = 0; lives = 3; level = 0; dying = false;
   document.getElementById('overlay').classList.add('hidden');
   gameActive = true;
