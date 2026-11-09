@@ -1,686 +1,728 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Q*HOPPER</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟠</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#0d0028;overflow:hidden;font-family:'Press Start 2P',monospace}
-canvas{display:block;position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q*HOPPER</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0028;
+      overflow: hidden;
+      width: 100vw; height: 100vh;
+      font-family: 'Press Start 2P', monospace;
+    }
+    canvas { display: block; }
+
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 16px 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 10px;
+      color: #fff;
+      line-height: 1.8;
+    }
+    .hud-label { color: #888; font-size: 8px; }
+    .hud-val { color: #fff; font-size: 11px; }
+    #lives-icons { display: flex; gap: 6px; margin-top: 4px; }
+    .life-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #ff8800;
+      box-shadow: 0 0 6px #ff8800;
+    }
+
+    #overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(13,0,40,0.92);
+      z-index: 20;
+      text-align: center;
+      padding: 2rem;
+    }
+    #overlay h1 {
+      font-size: clamp(1.4rem, 5vw, 2.4rem);
+      color: #ff8800;
+      text-shadow: 0 0 20px #ff8800aa;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+    #overlay .sub {
+      font-size: clamp(0.5rem, 2vw, 0.75rem);
+      color: #aaa;
+      line-height: 2.2;
+      margin-bottom: 2rem;
+    }
+    #overlay .btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.6rem, 2vw, 0.9rem);
+      background: #ff8800;
+      color: #000;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      pointer-events: all;
+      letter-spacing: 0.08em;
+      transition: background 0.15s, transform 0.1s;
+    }
+    #overlay .btn:hover { background: #ffaa33; transform: scale(1.04); }
+    #overlay.hidden { display: none; }
+
+    #swear {
+      position: fixed;
+      font-size: clamp(0.55rem, 2vw, 0.85rem);
+      color: #fff;
+      background: rgba(0,0,0,0.75);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      padding: 6px 10px;
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+      white-space: nowrap;
+      text-shadow: 0 0 8px #ff4444;
+    }
+
+    .keys-hint {
+      font-size: 0.55rem;
+      color: #555;
+      margin-top: 1.5rem;
+      line-height: 2.2;
+    }
+  </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+
+<div id="hud">
+  <div class="hud-box">
+    <div class="hud-label">SCORE</div>
+    <div class="hud-val" id="hud-score">0</div>
+  </div>
+  <div class="hud-box" style="text-align:center;">
+    <div class="hud-label">LEVEL</div>
+    <div class="hud-val" id="hud-level">1</div>
+  </div>
+  <div class="hud-box" style="text-align:right;">
+    <div class="hud-label">LIVES</div>
+    <div id="lives-icons"></div>
+  </div>
+</div>
+
+<div id="swear">@!#?@!</div>
+
+<div id="overlay">
+  <h1>Q*HOPPER</h1>
+  <p class="sub">
+    HOP ALL CUBES TO CHANGE THEIR COLOR<br>
+    AVOID RED DANGER CUBES &amp; ENEMIES<br>
+    USE ARROW KEYS OR WASD TO HOP
+  </p>
+  <button class="btn" id="start-btn">START GAME</button>
+  <div class="keys-hint">
+    ↖ Q &nbsp; ↗ W &nbsp; ↙ A &nbsp; ↘ S &nbsp;·&nbsp; ARROW KEYS ALSO WORK
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ── Canvas setup ─────────────────────────────────────────────────────────────
-const c   = document.getElementById('c');
-const ctx = c.getContext('2d');
-ctx.imageSmoothingEnabled = false;
-const GW = 480, GH = 360;
-c.width = GW; c.height = GH;
+// ─── Constants ───────────────────────────────────────────────────────────────
+const ROWS = 7;
+const CS = 1.8;       // cube size
+const CUBE_H = 1.1;   // cube height (flatter for classic Q*bert look)
+const STEP = 2.1;     // grid spacing
+const HOP_DURATION = 220; // ms
+const HOP_HEIGHT = 2.8;
+const ENEMY_HOP_MS = 950;
+const CAMSIZE = 11;
 
-// ── Isometric geometry ───────────────────────────────────────────────────────
-const TW     = 28;   // half-width of tile top face
-const TH     = 14;   // half-height of tile top face
-const CUBE_H = 22;   // side face height
-const STEP_Y = TH + CUBE_H; // 36 — vertical pitch between rows
-const ROWS   = 7;
-const ORIG_X = GW / 2;   // 240
-const ORIG_Y = 50;        // top padding
+// Q*bert hop directions: [dcol, drow]
+const DIRS = {
+  ul: [-1, -1],
+  ur: [ 0, -1],
+  ll: [ 0,  1],
+  lr: [ 1,  1],
+};
 
-function tileToScreen(col, row) {
-  return {
-    cx: ORIG_X + (2 * col - row) * TW,
-    cy: ORIG_Y + row * STEP_Y
-  };
+// Palettes: 6-face colors [+x,-x,+y,-y,+z,-z]; hidden faces = 0
+// Visible from camera at (50,50,50): +x (right), +y (top), +z (front)
+const PALS = [
+  { unlit:[0x3a1f9c,0,0x5533cc,0,0x1e0f5a,0], lit:[0xb06800,0,0xf0a020,0,0x704000,0], bg:0x0d0028 },
+  { unlit:[0x0d3d1e,0,0x1a6632,0,0x06200f,0], lit:[0xaa1133,0,0xff4466,0,0x770011,0], bg:0x000e06 },
+  { unlit:[0x002a40,0,0x004466,0,0x001525,0], lit:[0x008899,0,0x22ddff,0,0x005566,0], bg:0x000a14 },
+  { unlit:[0x3d1500,0,0x662200,0,0x200900,0], lit:[0x3a8800,0,0x66ee22,0,0x204400,0], bg:0x100500 },
+];
+const DANGER_COLS = [0x881100, 0, 0xdd2200, 0, 0x550000, 0];
+
+// ─── Three.js Init ───────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0028);
+
+const camera = new THREE.OrthographicCamera(-CAMSIZE, CAMSIZE, CAMSIZE, -CAMSIZE, 0.1, 500);
+camera.position.set(50, 50, 50);
+camera.lookAt(0, 0, 0);
+
+function resize() {
+  const w = innerWidth, h = innerHeight, asp = w / h;
+  renderer.setSize(w, h);
+  camera.left  = -CAMSIZE * asp;
+  camera.right =  CAMSIZE * asp;
+  camera.updateProjectionMatrix();
 }
+resize();
+window.addEventListener('resize', resize);
 
+// Lighting
+scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(10, 20, 10);
+scene.add(sun);
+
+// ─── Grid Utils ──────────────────────────────────────────────────────────────
 function isValid(col, row) {
   return row >= 0 && row < ROWS && col >= 0 && col <= row;
 }
 
-// direction → grid delta
-function delta(dir) {
-  if (dir === 'ul') return [-1, -1];
-  if (dir === 'ur') return [ 0, -1];
-  if (dir === 'll') return [ 0,  1];
-  if (dir === 'lr') return [ 1,  1];
+// Map grid (col,row) → 3D world position (center-top of cube)
+function gridToWorld(col, row) {
+  // Classic isometric layout:
+  //   X axis: col increases →
+  //   Z axis: (row-col) increases toward viewer
+  // Center the pyramid around origin
+  const cx = (ROWS - 1) * STEP * 0.5;
+  const cz = 0;
+  const x = col * STEP + (ROWS - 1 - row) * STEP * 0.5 - cx;
+  const z = (row - col) * STEP * 0.5 - (ROWS - 1) * STEP * 0.25 + cz;
+  return new THREE.Vector3(x, 0, z);
 }
 
-// ── Level palettes ───────────────────────────────────────────────────────────
-const PALS = [
-  { off:['#5533cc','#3a1f9c','#1e0f5a'], on:['#f0a020','#b06800','#704000'], bg:'#0d0028' },
-  { off:['#1a6632','#0d3d1e','#06200f'], on:['#ff4466','#bb1133','#770011'], bg:'#000e06' },
-  { off:['#004466','#002a40','#001525'], on:['#22ddff','#00aacc','#007799'], bg:'#00060e' },
-  { off:['#662200','#3d1500','#200900'], on:['#88ff44','#55cc22','#2a7700'], bg:'#0d0500' },
-];
-let palIdx = 0;
-let pal    = PALS[0];
-
-// ── Cube state ───────────────────────────────────────────────────────────────
-const cubes = new Map(); // "col,row" → { col, row, lit, danger }
-
-function initCubes() {
-  cubes.clear();
-  for (let r = 0; r < ROWS; r++) {
-    for (let c2 = 0; c2 <= r; c2++) {
-      cubes.set(`${c2},${r}`, { col: c2, row: r, lit: false, danger: false });
+// ─── BFS Reachability (guarantees no dead tiles) ──────────────────────────────
+function isCompletable(cubeData) {
+  const startKey = '0,0';
+  if (!cubeData.has(startKey) || cubeData.get(startKey).danger) return false;
+  const visited = new Set([startKey]);
+  const queue = [[0, 0]];
+  while (queue.length) {
+    const [c, r] = queue.shift();
+    for (const [dc, dr] of Object.values(DIRS)) {
+      const nc = c + dc, nr = r + dr;
+      if (!isValid(nc, nr)) continue;
+      const key = `${nc},${nr}`;
+      if (visited.has(key)) continue;
+      const cube = cubeData.get(key);
+      if (!cube || cube.danger) continue;
+      visited.add(key);
+      queue.push([nc, nr]);
     }
   }
-  // Seed a few danger tiles (not top 2 rows)
-  const keys = [...cubes.keys()].filter(k => {
-    const cube = cubes.get(k);
-    return cube.row >= 2;
-  });
-  const numDanger = 2 + palIdx;
-  for (let i = 0; i < numDanger; i++) {
-    const k = keys[Math.floor(Math.random() * keys.length)];
-    if (k !== '0,0') cubes.get(k).danger = true;
+  for (const [key, cube] of cubeData) {
+    if (!cube.danger && !visited.has(key)) return false;
   }
-  // Light starting cube
-  cubes.get('0,0').lit = true;
-}
-
-function getCube(col, row) {
-  return cubes.get(`${col},${row}`) || null;
-}
-
-function allLit() {
-  for (const [, cube] of cubes) if (!cube.lit && !cube.danger) return false;
   return true;
 }
 
-// ── Drawing ──────────────────────────────────────────────────────────────────
-function drawCube(col, row) {
-  const { cx, cy } = tileToScreen(col, row);
-  const cube = getCube(col, row);
-  let topC, leftC, rightC;
-
-  if (cube.danger) {
-    // Pulsing red danger tile
-    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 200);
-    topC   = `hsl(0,90%,${Math.round(30 + pulse * 20)}%)`;
-    leftC  = '#660000';
-    rightC = '#440000';
-  } else if (cube.lit) {
-    topC   = pal.on[0]; leftC  = pal.on[1]; rightC = pal.on[2];
-  } else {
-    topC   = pal.off[0]; leftC = pal.off[1]; rightC = pal.off[2];
-  }
-
-  // Right face
-  ctx.fillStyle = rightC;
-  ctx.beginPath();
-  ctx.moveTo(cx,      cy + TH);
-  ctx.lineTo(cx + TW, cy);
-  ctx.lineTo(cx + TW, cy + CUBE_H);
-  ctx.lineTo(cx,      cy + TH + CUBE_H);
-  ctx.closePath();
-  ctx.fill();
-
-  // Left face
-  ctx.fillStyle = leftC;
-  ctx.beginPath();
-  ctx.moveTo(cx - TW, cy);
-  ctx.lineTo(cx,      cy + TH);
-  ctx.lineTo(cx,      cy + TH + CUBE_H);
-  ctx.lineTo(cx - TW, cy + CUBE_H);
-  ctx.closePath();
-  ctx.fill();
-
-  // Top face
-  ctx.fillStyle = topC;
-  ctx.beginPath();
-  ctx.moveTo(cx,      cy - TH);
-  ctx.lineTo(cx + TW, cy);
-  ctx.lineTo(cx,      cy + TH);
-  ctx.lineTo(cx - TW, cy);
-  ctx.closePath();
-  ctx.fill();
-
-  // Outlines
-  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.lineWidth = 1;
-  // top
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - TH); ctx.lineTo(cx + TW, cy);
-  ctx.lineTo(cx, cy + TH); ctx.lineTo(cx - TW, cy);
-  ctx.closePath(); ctx.stroke();
-  // left
-  ctx.beginPath();
-  ctx.moveTo(cx - TW, cy); ctx.lineTo(cx, cy + TH);
-  ctx.lineTo(cx, cy + TH + CUBE_H); ctx.lineTo(cx - TW, cy + CUBE_H);
-  ctx.closePath(); ctx.stroke();
-  // right
-  ctx.beginPath();
-  ctx.moveTo(cx, cy + TH); ctx.lineTo(cx + TW, cy);
-  ctx.lineTo(cx + TW, cy + CUBE_H); ctx.lineTo(cx, cy + TH + CUBE_H);
-  ctx.closePath(); ctx.stroke();
+// ─── Material Helpers ────────────────────────────────────────────────────────
+function makeMats(cols) {
+  return cols.map(c => new THREE.MeshLambertMaterial({ color: c || 0x000000 }));
 }
 
-// ── Q*bert character ─────────────────────────────────────────────────────────
-// dir: 'ul','ur','ll','lr'
-function drawQbert(x, y, dir, sq, opacity) {
-  const R = 11;
-  if (opacity === undefined) opacity = 1;
-  ctx.save();
-  ctx.globalAlpha = opacity;
-  ctx.translate(Math.round(x), Math.round(y));
+// ─── Game State ──────────────────────────────────────────────────────────────
+let score = 0, lives = 3, level = 0, gameActive = false;
 
-  // Squash/stretch
-  const sxScale = 1 + sq * 0.35;
-  const syScale = 1 - sq * 0.45;
-  ctx.scale(sxScale, syScale);
+let cubeMap = new Map();   // `col,row` → { mesh, danger, lit, col, row }
+const cubeGroup = new THREE.Group();
+scene.add(cubeGroup);
+
+let qbertGroup = null, qbertBody = null, qbertNoseGroup = null;
+let qCol = 0, qRow = 0;
+let hopPhase = null; // { fromV, toV, startTime, duration, toCol, toRow, danger }
+let squashT = 1;
+let dying = false;
+let qbertGraceUntil = 0; // ms timestamp — invincible until this time
+
+let enemies = [];
+const enemyGroup = new THREE.Group();
+scene.add(enemyGroup);
+
+let dangerMats = [];
+let dangerClock = 0;
+let litCount = 0, totalNonDanger = 0;
+let currentUnlitMats = [], currentLitMats = [];
+
+// ─── Build Pyramid ───────────────────────────────────────────────────────────
+const cubeGeo = new THREE.BoxGeometry(CS, CUBE_H, CS);
+
+function buildPyramid(palIdx) {
+  cubeGroup.clear();
+  cubeMap.clear();
+
+  const pal = PALS[palIdx];
+  scene.background.set(pal.bg);
+
+  currentUnlitMats = makeMats(pal.unlit);
+  currentLitMats   = makeMats(pal.lit);
+  dangerMats       = pal.danger_mats || makeMats(DANGER_COLS);
+  // Store on pal so we reuse the same emissive material instance for pulsing
+  if (!pal.danger_mats) {
+    dangerMats[2].emissive = new THREE.Color(0x550000);
+    pal.danger_mats = dangerMats;
+  }
+
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col <= row; col++) {
+      const key = `${col},${row}`;
+      const wp = gridToWorld(col, row);
+      const mesh = new THREE.Mesh(cubeGeo, currentUnlitMats.map(m => m.clone()));
+      mesh.position.set(wp.x, wp.y, wp.z);
+      cubeGroup.add(mesh);
+      cubeMap.set(key, { mesh, danger: false, lit: false, col, row });
+    }
+  }
+}
+
+// ─── Danger Placement (BFS-safe) ─────────────────────────────────────────────
+function placeDanger(targetCount) {
+  const keys = [...cubeMap.keys()].filter(k => k !== '0,0');
+  for (let i = keys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [keys[i], keys[j]] = [keys[j], keys[i]];
+  }
+  let added = 0;
+  for (const key of keys) {
+    if (added >= targetCount) break;
+    cubeMap.get(key).danger = true;
+    if (!isCompletable(cubeMap)) {
+      cubeMap.get(key).danger = false;
+    } else {
+      added++;
+    }
+  }
+  for (const [, cube] of cubeMap) {
+    if (cube.danger) {
+      cube.mesh.material = dangerMats.map(m => m.clone ? m.clone() : m);
+      // Share the same emissive top material for synchronized pulsing
+      cube.mesh.material[2] = dangerMats[2];
+    }
+  }
+}
+
+// ─── Q*bert Character ────────────────────────────────────────────────────────
+function buildQbert() {
+  if (qbertGroup) scene.remove(qbertGroup);
+  qbertGroup = new THREE.Group();
+
+  const bodyGeo = new THREE.SphereGeometry(0.52, 20, 14);
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0xff8800 });
+  qbertBody = new THREE.Mesh(bodyGeo, bodyMat);
+  qbertBody.position.y = 0.52;
+  qbertGroup.add(qbertBody);
+
+  // Eyes
+  const eyeGeo = new THREE.SphereGeometry(0.13, 8, 8);
+  const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const blackMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+  [-0.19, 0.19].forEach(ox => {
+    const white = new THREE.Mesh(eyeGeo, whiteMat);
+    white.position.set(ox, 0.75, 0.42);
+    qbertGroup.add(white);
+    const pup = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), blackMat);
+    pup.position.set(ox, 0.75, 0.53);
+    qbertGroup.add(pup);
+  });
+
+  // Nose group (rotates with direction)
+  qbertNoseGroup = new THREE.Group();
+  qbertNoseGroup.position.y = 0.52;
+  const noseGeo = new THREE.CylinderGeometry(0.1, 0.15, 0.5, 8);
+  const noseMat = new THREE.MeshLambertMaterial({ color: 0xff5533 });
+  const nose = new THREE.Mesh(noseGeo, noseMat);
+  nose.rotation.x = Math.PI / 2;
+  nose.position.z = 0.6;
+  qbertNoseGroup.add(nose);
+  qbertGroup.add(qbertNoseGroup);
 
   // Drop shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath();
-  ctx.ellipse(0, R + 2, R * sxScale * 0.7, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
-  ctx.fillStyle = '#ff8800';
-  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#cc5500'; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // Direction-based face offsets
-  const faceOff = {
-    ul: { ex:-3, ey:-2, nx:-3, ny: 3 },
-    ur: { ex: 3, ey:-2, nx: 3, ny: 3 },
-    ll: { ex:-3, ey: 2, nx:-3, ny: 5 },
-    lr: { ex: 3, ey: 2, nx: 3, ny: 5 },
-  }[dir] || { ex:0, ey:0, nx:0, ny:4 };
-
-  // Eyes
-  for (const sx of [-3.5, 2.5]) {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(sx + faceOff.ex, -2 + faceOff.ey, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(sx + faceOff.ex + 0.8, -1.5 + faceOff.ey, 1.5, 0, Math.PI * 2); ctx.fill();
-  }
-
-  // Nose
-  ctx.fillStyle = '#ff5533';
-  ctx.beginPath(); ctx.ellipse(faceOff.nx, faceOff.ny, 3, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#cc2200'; ctx.lineWidth = 0.8; ctx.stroke();
-
-  ctx.restore();
-}
-
-// ── Enemy sprite ─────────────────────────────────────────────────────────────
-function drawEnemy(x, y, sq, color) {
-  const R = 10;
-  ctx.save();
-  ctx.translate(Math.round(x), Math.round(y));
-  ctx.scale(1 + sq * 0.3, 1 - sq * 0.4);
-
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.beginPath(); ctx.ellipse(0, R + 2, R * 0.7, 4, 0, 0, Math.PI * 2); ctx.fill();
-
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
-
-  // Eyes
-  for (const sx of [-3, 3]) {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(sx, -2, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(sx + 0.5, -1.5, 1.2, 0, Math.PI * 2); ctx.fill();
-  }
-  // Angry brow
-  ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(-5, -5); ctx.lineTo(-1.5, -4); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(5, -5);  ctx.lineTo(1.5, -4);  ctx.stroke();
-
-  ctx.restore();
-}
-
-// ── HUD / text helpers ───────────────────────────────────────────────────────
-function px(text, x, y, size, color, align) {
-  ctx.fillStyle = color || '#fff';
-  ctx.font = `${size}px "Press Start 2P", monospace`;
-  ctx.textAlign = align || 'left';
-  ctx.fillText(text, x, y);
-}
-
-function drawBubble(x, y, text) {
-  ctx.save();
-  ctx.font = '8px "Press Start 2P", monospace';
-  const w = ctx.measureText(text).width + 10;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y - 12, w, 16);
-  ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(x, y - 12, w, 16);
-  ctx.fillStyle = '#ff0000'; ctx.textAlign = 'left';
-  ctx.fillText(text, x + 5, y);
-  // Tail
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.moveTo(x + 8, y + 4); ctx.lineTo(x + 3, y + 10); ctx.lineTo(x + 14, y + 4); ctx.fill();
-  ctx.restore();
-}
-
-// ── Audio ─────────────────────────────────────────────────────────────────────
-let AC = null;
-function ensureAudio() {
-  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-  if (AC.state === 'suspended') AC.resume();
-}
-function beep(freq, t, dur, type, vol, freq2) {
-  if (!AC) return;
-  const o = AC.createOscillator(), g = AC.createGain();
-  o.type = type || 'square';
-  o.frequency.setValueAtTime(freq, AC.currentTime + t);
-  if (freq2) o.frequency.exponentialRampToValueAtTime(freq2, AC.currentTime + t + dur);
-  g.gain.setValueAtTime(vol || 0.07, AC.currentTime + t);
-  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + t + dur);
-  o.connect(g); g.connect(AC.destination);
-  o.start(AC.currentTime + t); o.stop(AC.currentTime + t + dur + 0.05);
-}
-function sfx(name) {
-  if (!AC) return;
-  if (name === 'hop') {
-    beep(380, 0, 0.04, 'square', 0.07);
-    beep(560, 0.04, 0.07, 'square', 0.09);
-  } else if (name === 'land') {
-    beep(300, 0, 0.03, 'square', 0.06, 220);
-  } else if (name === 'color') {
-    beep(700, 0, 0.05, 'square', 0.08, 1000);
-  } else if (name === 'die') {
-    beep(500, 0, 0.08, 'square', 0.09, 80);
-    beep(200, 0.08, 0.25, 'square', 0.09, 50);
-  } else if (name === 'win') {
-    [523, 659, 784, 1047, 1319].forEach((f, i) => beep(f, i * 0.1, 0.12, 'square', 0.07));
-  } else if (name === 'fall') {
-    beep(600, 0, 0.6, 'sawtooth', 0.06, 40);
-  }
-}
-
-// ── Game state ────────────────────────────────────────────────────────────────
-let state = 'title'; // title | playing | dead | win | gameover
-let score = 0, lives = 3, level = 0;
-let swearTimer = 0;
-
-// Player
-let pCol = 0, pRow = 0, pDir = 'lr';
-let pHop = null;  // null | {fc,fr,tc,tr,t,dir}
-let pSq  = 0;     // squash 0–1
-let pFalling = false, pFallT = 0;
-
-// Enemies
-const enemies = [];
-let enemySpawnT = 3;
-
-// Input queue
-const inputQ = [];
-const keys   = {};
-
-addEventListener('keydown', e => {
-  if (!keys[e.code]) {
-    keys[e.code] = true;
-    ensureAudio();
-
-    if (state === 'title' || state === 'gameover') { startGame(); return; }
-    if (state === 'win') { nextLevel(); return; }
-
-    const map = {
-      ArrowUp:'ur', KeyW:'ur',
-      ArrowLeft:'ul', KeyA:'ul',
-      ArrowDown:'ll', KeyS:'ll',
-      ArrowRight:'lr', KeyD:'lr',
-    };
-    if (map[e.code]) { inputQ.push(map[e.code]); e.preventDefault(); }
-  }
-});
-addEventListener('keyup', e => { keys[e.code] = false; });
-
-// Touch: swipe to determine direction
-let touchStart = null;
-c.addEventListener('touchstart', e => {
-  ensureAudio();
-  touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  if (state === 'title' || state === 'gameover') startGame();
-  e.preventDefault();
-}, { passive: false });
-c.addEventListener('touchend', e => {
-  if (!touchStart) return;
-  const dx = e.changedTouches[0].clientX - touchStart.x;
-  const dy = e.changedTouches[0].clientY - touchStart.y;
-  touchStart = null;
-  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
-  // Map swipe to isometric direction
-  if (Math.abs(dx) > Math.abs(dy)) {
-    inputQ.push(dx > 0 ? 'lr' : 'ul');
-  } else {
-    inputQ.push(dy > 0 ? 'll' : 'ur');
-  }
-  e.preventDefault();
-}, { passive: false });
-
-// ── Game lifecycle ────────────────────────────────────────────────────────────
-function startGame() {
-  score = 0; lives = 3; level = 0; palIdx = 0; pal = PALS[0];
-  beginLevel();
-}
-
-function beginLevel() {
-  initCubes();
-  pCol = 0; pRow = 0; pDir = 'lr';
-  pHop = null; pSq = 0; pFalling = false; pFallT = 0;
-  enemies.length = 0;
-  enemySpawnT = 3;
-  inputQ.length = 0;
-  swearTimer = 0;
-  state = 'playing';
-}
-
-function nextLevel() {
-  level++;
-  palIdx = level % PALS.length;
-  pal = PALS[palIdx];
-  beginLevel();
-}
-
-function die() {
-  lives--;
-  swearTimer = 1.4;
-  pHop = null; pFalling = false;
-  sfx('die');
-  if (lives <= 0) {
-    setTimeout(() => { state = 'gameover'; }, 1500);
-  } else {
-    setTimeout(() => {
-      pCol = 0; pRow = 0; pDir = 'lr';
-      pHop = null; pSq = 0; pFalling = false;
-      enemies.length = 0; enemySpawnT = 2;
-      inputQ.length = 0; swearTimer = 0;
-      state = 'playing';
-    }, 1500);
-  }
-  state = 'dead';
-}
-
-// ── Hop mechanics ─────────────────────────────────────────────────────────────
-const HOP_HEIGHT = 38;
-const HOP_SPEED  = 4.5;
-
-function startHop(dir) {
-  const [dc, dr] = delta(dir);
-  const tc = pCol + dc, tr = pRow + dr;
-  pDir = dir;
-  pHop = { fc: pCol, fr: pRow, tc, tr, t: 0, dir };
-  sfx('hop');
-}
-
-function characterScreenPos(col, row, hop, t, hopHeight) {
-  const { cx: fcx, cy: fcy } = tileToScreen(hop ? hop.fc : col, hop ? hop.fr : row);
-  if (!hop) return { x: fcx, y: fcy - TH - 12 };
-  const { cx: tcx, cy: tcy } = tileToScreen(hop.tc, hop.tr);
-  const x = fcx + (tcx - fcx) * t;
-  const arc = -hopHeight * 4 * t * (1 - t);
-  const y = fcy + (tcy - fcy) * t + arc - TH - 12;
-  return { x, y };
-}
-
-// ── Enemy logic ───────────────────────────────────────────────────────────────
-function spawnEnemy() {
-  // Start from a random top-row cube that isn't Q*bert's spot
-  const startCol = Math.random() < 0.5 ? 0 : 0; // always from top
-  enemies.push({
-    col: 0, row: 0,
-    hop: null, hopT: 0,
-    sq: 0,
-    color: ['#cc22cc','#dd4400','#2244dd'][Math.floor(Math.random() * 3)],
-    nextHopDelay: 0.5 + Math.random() * 0.5,
-    dead: false,
+  const shadowGeo = new THREE.CircleGeometry(0.42, 16);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false
   });
+  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = -CUBE_H * 0.5 + 0.02;
+  qbertGroup.add(shadow);
+
+  scene.add(qbertGroup);
 }
 
-function updateEnemy(e, dt) {
-  if (e.dead) return;
+// Nose rotation per hop direction
+const DIR_ROT = { ul: -Math.PI / 2, ur: Math.PI, lr: Math.PI / 2, ll: 0 };
 
-  if (e.hop) {
-    e.hop.t = Math.min(1, e.hop.t + dt * 3.5);
-    if (e.hop.t >= 1) {
-      e.col = e.hop.tc; e.row = e.hop.tr;
-      e.sq = 0.75; e.hop = null;
-      sfx('land');
-      // Fell off?
-      if (!isValid(e.col, e.row)) { e.dead = true; return; }
-      // Hit Q*bert?
-      if (state === 'playing' && e.col === pCol && e.row === pRow && !pHop) die();
-      e.nextHopDelay = 0.4 + Math.random() * 0.5;
-    }
-  } else {
-    e.sq = Math.max(0, e.sq - dt * 5);
-    e.nextHopDelay -= dt;
-    if (e.nextHopDelay <= 0) {
-      // Always hop downward (ll or lr), sometimes toward Q*bert
-      let dir;
-      if (Math.random() < 0.4) {
-        // Chase: pick direction that moves closer to Q*bert
-        const [lc, lr] = [e.col, e.row + 1];
-        const [rc, rr] = [e.col + 1, e.row + 1];
-        const dLeft  = Math.abs(pCol - lc) + Math.abs(pRow - lr);
-        const dRight = Math.abs(pCol - rc) + Math.abs(pRow - rr);
-        dir = dLeft < dRight ? 'll' : 'lr';
-      } else {
-        dir = Math.random() < 0.5 ? 'll' : 'lr';
-      }
-      const [dc, dr] = delta(dir);
-      e.hop = { fc: e.col, fr: e.row, tc: e.col + dc, tr: e.row + dr, t: 0 };
-    }
-  }
+function setQbertAtTile(col, row) {
+  const wp = gridToWorld(col, row);
+  qbertGroup.position.set(wp.x, wp.y + CUBE_H * 0.5, wp.z);
+  qbertGroup.scale.set(1, 1, 1);
 }
 
-// ── Main loop ─────────────────────────────────────────────────────────────────
-let lastT = performance.now();
+// ─── Enemies ─────────────────────────────────────────────────────────────────
+const ENEMY_COLORS = [0xff2244, 0x44aaff, 0x44ff88, 0xff44ff];
+const ENEMY_DOWN_DIRS = [DIRS.ll, DIRS.lr];
 
-function frame(now) {
-  requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
+function spawnEnemy() {
+  const colorIdx = enemies.length % ENEMY_COLORS.length;
+  const geo = new THREE.SphereGeometry(0.38, 14, 10);
+  const mat = new THREE.MeshLambertMaterial({ color: ENEMY_COLORS[colorIdx] });
+  const mesh = new THREE.Mesh(geo, mat);
 
-  // Background
-  ctx.fillStyle = pal.bg || '#0d0028';
-  ctx.fillRect(0, 0, GW, GH);
+  // Mini eyes
+  const eyeGeo = new THREE.SphereGeometry(0.09, 8, 8);
+  const eMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  [-0.14, 0.14].forEach(ox => {
+    const e = new THREE.Mesh(eyeGeo, eMat);
+    e.position.set(ox, 0.18, 0.3);
+    mesh.add(e);
+  });
 
-  if (state === 'title') {
-    drawTitle(); return;
+  const group = new THREE.Group();
+  group.add(mesh);
+  enemyGroup.add(group);
+
+  // Start enemies off-screen above the top tile, with a grace period before collision
+  const sc = 0, sr = 0;
+  const wp = gridToWorld(sc, sr);
+  group.position.set(wp.x, wp.y + CUBE_H * 0.5 + 3.5, wp.z); // start above
+
+  const spawnedAt = Date.now();
+  enemies.push({
+    group, col: sc, row: sr,
+    hopPhase: null,
+    nextHopAt: spawnedAt + 1200 + Math.random() * 600,
+    alive: true,
+    bounceDir: ENEMY_DOWN_DIRS[Math.floor(Math.random() * 2)],
+    graceUntil: spawnedAt + 2000, // no collision for first 2s
+  });
+
+  // Animate drop-in
+  const startY = wp.y + CUBE_H * 0.5 + 3.5;
+  const endY   = wp.y + CUBE_H * 0.5 + 0.38;
+  const dropStart = Date.now();
+  const dropDuration = 400;
+  function dropAnim() {
+    const t = Math.min((Date.now() - dropStart) / dropDuration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    group.position.y = startY + (endY - startY) * ease;
+    if (t < 1) requestAnimationFrame(dropAnim);
   }
-  if (state === 'gameover') {
-    drawGameOver(); return;
-  }
+  requestAnimationFrame(dropAnim);
+}
 
-  // ── Update ──────────────────────────────────────────────────────────────────
-  if (state === 'playing') {
-    // Player hop
-    if (pHop) {
-      pHop.t = Math.min(1, pHop.t + dt * HOP_SPEED);
-      if (pHop.t >= 1) {
-        // Landed
-        pCol = pHop.tc; pRow = pHop.tr;
-        pSq = 0.85;
-        sfx('land');
+function updateEnemy(enemy, now) {
+  if (!enemy.alive) return;
 
-        const cube = getCube(pCol, pRow);
-        if (!cube) {
-          // Fell off the board!
-          sfx('fall'); die();
-        } else if (cube.danger) {
-          // Danger tile!
-          sfx('fall'); die();
-        } else {
-          if (!cube.lit) { cube.lit = true; score += 25; sfx('color'); }
-          // Check enemy collision on landing
-          for (const e of enemies) {
-            if (!e.dead && !e.hop && e.col === pCol && e.row === pRow) { die(); break; }
-          }
-          if (state === 'playing' && allLit()) { state = 'win'; sfx('win'); }
-        }
-        pHop = null;
+  if (enemy.hopPhase) {
+    const elapsed = now - enemy.hopPhase.startTime;
+    const t = Math.min(elapsed / ENEMY_HOP_MS, 1);
+    const arc = HOP_HEIGHT * 0.65 * 4 * t * (1 - t);
+    enemy.group.position.lerpVectors(enemy.hopPhase.fromV, enemy.hopPhase.toV, t);
+    enemy.group.position.y += arc;
+    const s = Math.sin(t * Math.PI);
+    enemy.group.scale.set(1 - s * 0.1, 1 + s * 0.22, 1 - s * 0.1);
+
+    if (t >= 1) {
+      enemy.col = enemy.hopPhase.toCol;
+      enemy.row = enemy.hopPhase.toRow;
+      enemy.group.scale.set(1, 1, 1);
+      enemy.hopPhase = null;
+      enemy.nextHopAt = now + ENEMY_HOP_MS * 0.75 + Math.random() * 400;
+
+      if (!isValid(enemy.col, enemy.row)) {
+        // Fell off; reset to top
+        enemy.col = 0; enemy.row = 0;
+        const wp = gridToWorld(0, 0);
+        enemy.group.position.set(wp.x, wp.y + CUBE_H * 0.5 + 0.38, wp.z);
+        enemy.nextHopAt = now + 1000 + Math.random() * 1000;
+        enemy.bounceDir = ENEMY_DOWN_DIRS[Math.floor(Math.random() * 2)];
       }
+    }
+    return;
+  }
+
+  if (now < enemy.nextHopAt) return;
+
+  const [dc, dr] = enemy.bounceDir;
+  let nc = enemy.col + dc, nr = enemy.row + dr;
+
+  if (!isValid(nc, nr)) {
+    // Try other direction
+    const other = ENEMY_DOWN_DIRS.find(d => d !== enemy.bounceDir) || ENEMY_DOWN_DIRS[0];
+    nc = enemy.col + other[0];
+    nr = enemy.row + other[1];
+    enemy.bounceDir = other;
+  }
+
+  const fromV = enemy.group.position.clone();
+  const toWP = gridToWorld(nc, nr);
+  const baseY = isValid(nc, nr) ? toWP.y + CUBE_H * 0.5 + 0.38 : toWP.y + CUBE_H * 0.5 + 0.38;
+  const toV = new THREE.Vector3(toWP.x, baseY, toWP.z);
+
+  enemy.hopPhase = { fromV, toV, startTime: now, toCol: nc, toRow: nr };
+}
+
+// ─── Swear Bubble ────────────────────────────────────────────────────────────
+function worldToScreen(worldPos) {
+  const v = worldPos.clone().project(camera);
+  return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight };
+}
+
+function showSwear() {
+  const el = document.getElementById('swear');
+  const wp = qbertGroup.position.clone();
+  wp.y += 1.8;
+  const sc = worldToScreen(wp);
+  el.style.left = (sc.x - 44) + 'px';
+  el.style.top  = (sc.y - 32) + 'px';
+  el.style.display = 'block';
+}
+
+// ─── Death ───────────────────────────────────────────────────────────────────
+function triggerDeath() {
+  if (dying) return;
+  dying = true;
+  lives--;
+  updateHUD();
+  showSwear();
+  if (qbertBody) qbertBody.material.color.set(0xff2222);
+
+  setTimeout(() => {
+    document.getElementById('swear').style.display = 'none';
+    if (lives <= 0) {
+      gameOver();
     } else {
-      pSq = Math.max(0, pSq - dt * 6);
-      // Process input
-      if (inputQ.length > 0) {
-        startHop(inputQ.shift());
+      qCol = 0; qRow = 0;
+      setQbertAtTile(0, 0);
+      hopPhase = null;
+      qbertGraceUntil = Date.now() + 1500; // 1.5s invincibility after respawn
+      if (qbertBody) qbertBody.material.color.set(0xff8800);
+      dying = false;
+    }
+  }, 1300);
+}
+
+// ─── Level Complete / Game Over ───────────────────────────────────────────────
+function levelComplete() {
+  gameActive = false;
+  score += 500 + level * 150;
+  updateHUD();
+  setTimeout(() => {
+    level++;
+    dying = false;
+    gameActive = true;
+    startLevel();
+  }, 1400);
+}
+
+function gameOver() {
+  gameActive = false;
+  const ov = document.getElementById('overlay');
+  ov.querySelector('h1').textContent = 'GAME OVER';
+  ov.querySelector('.sub').innerHTML = `FINAL SCORE: ${score}<br><br>BETTER LUCK NEXT TIME`;
+  ov.querySelector('.btn').textContent = 'PLAY AGAIN';
+  ov.classList.remove('hidden');
+}
+
+// ─── Light Cube ───────────────────────────────────────────────────────────────
+function lightCube(col, row) {
+  const key = `${col},${row}`;
+  const cube = cubeMap.get(key);
+  if (!cube || cube.danger || cube.lit) return false;
+  cube.lit = true;
+  // Swap to lit materials (clone for independence)
+  cube.mesh.material = currentLitMats.map(m => m.clone());
+  litCount++;
+  return true;
+}
+
+// ─── HUD ─────────────────────────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score;
+  document.getElementById('hud-level').textContent = level + 1;
+  const el = document.getElementById('lives-icons');
+  el.innerHTML = '';
+  for (let i = 0; i < Math.max(0, lives); i++) {
+    const d = document.createElement('div');
+    d.className = 'life-dot';
+    el.appendChild(d);
+  }
+}
+
+// ─── Level Start ─────────────────────────────────────────────────────────────
+function startLevel() {
+  const palIdx = level % PALS.length;
+  const dangerTarget = Math.min(2 + level, 9);
+
+  buildPyramid(palIdx);
+  placeDanger(dangerTarget);
+
+  totalNonDanger = 0; litCount = 0;
+  for (const [, cube] of cubeMap) {
+    if (!cube.danger) totalNonDanger++;
+  }
+
+  enemyGroup.clear();
+  enemies = [];
+  const numEnemies = Math.min(1 + Math.floor(level / 2), 4);
+  for (let i = 0; i < numEnemies; i++) {
+    setTimeout(() => { if (gameActive) spawnEnemy(); }, i * 1400 + 600);
+  }
+
+  buildQbert();
+  qCol = 0; qRow = 0;
+  setQbertAtTile(0, 0);
+  hopPhase = null; squashT = 1;
+  qbertGraceUntil = Date.now() + 2000; // 2s grace at level start
+
+  lightCube(0, 0);
+  updateHUD();
+}
+
+// ─── Input ───────────────────────────────────────────────────────────────────
+const KEY_TO_DIR = {
+  ArrowLeft: 'ul', KeyQ: 'ul',
+  ArrowUp:   'ur', KeyW: 'ur',
+  ArrowDown: 'll', KeyA: 'll',
+  ArrowRight:'lr', KeyS: 'lr',
+};
+
+window.addEventListener('keydown', e => {
+  if (!gameActive || dying) return;
+  const dir = KEY_TO_DIR[e.code];
+  if (!dir) return;
+  e.preventDefault();
+  if (hopPhase) return;
+
+  const [dc, dr] = DIRS[dir];
+  if (qbertNoseGroup) qbertNoseGroup.rotation.y = DIR_ROT[dir];
+
+  const nc = qCol + dc, nr = qRow + dr;
+
+  if (!isValid(nc, nr)) {
+    triggerDeath();
+    return;
+  }
+
+  const fromWP = gridToWorld(qCol, qRow);
+  const toWP   = gridToWorld(nc, nr);
+  const fromV  = new THREE.Vector3(fromWP.x, fromWP.y + CUBE_H * 0.5, fromWP.z);
+  const toV    = new THREE.Vector3(toWP.x,   toWP.y   + CUBE_H * 0.5, toWP.z);
+  const destCube = cubeMap.get(`${nc},${nr}`);
+
+  hopPhase = {
+    fromV, toV,
+    startTime: performance.now(),
+    duration: HOP_DURATION,
+    toCol: nc, toRow: nr,
+    danger: !!(destCube && destCube.danger),
+  };
+});
+
+// ─── Animate ─────────────────────────────────────────────────────────────────
+function animate(now) {
+  requestAnimationFrame(animate);
+
+  if (!gameActive) {
+    renderer.render(scene, camera);
+    return;
+  }
+
+  const dt = 16; // approximate frame time for clock
+  dangerClock += 0.018;
+
+  // Pulse danger tile top face emissive
+  const pulse = 0.5 + 0.5 * Math.sin(dangerClock * 3.5);
+  if (dangerMats[2] && dangerMats[2].emissive) {
+    dangerMats[2].emissive.lerpColors(
+      new THREE.Color(0x330000),
+      new THREE.Color(0xff2200),
+      pulse
+    );
+  }
+
+  // Q*bert hop animation
+  if (hopPhase && !dying) {
+    const elapsed = now - hopPhase.startTime;
+    const t = Math.min(elapsed / hopPhase.duration, 1);
+    const arc = HOP_HEIGHT * 4 * t * (1 - t);
+
+    qbertGroup.position.lerpVectors(hopPhase.fromV, hopPhase.toV, t);
+    qbertGroup.position.y += arc;
+
+    const s = Math.sin(t * Math.PI);
+    qbertGroup.scale.set(1 - s * 0.12, 1 + s * 0.3, 1 - s * 0.12);
+
+    if (t >= 1) {
+      qCol = hopPhase.toCol;
+      qRow = hopPhase.toRow;
+      const landed = hopPhase;
+      hopPhase = null;
+
+      if (landed.danger) {
+        qbertGroup.scale.set(1, 1, 1);
+        triggerDeath();
+      } else {
+        squashT = 0.82; // landing squash
+        lightCube(qCol, qRow);
+        score += 25;
+        updateHUD();
+        if (litCount >= totalNonDanger) levelComplete();
       }
     }
+  }
 
-    // Enemy spawn
-    enemySpawnT -= dt;
-    const activeEnemies = enemies.filter(e => !e.dead).length;
-    if (enemySpawnT <= 0 && activeEnemies < 2 + Math.floor(level / 2)) {
-      spawnEnemy();
-      enemySpawnT = 4 + Math.random() * 3 - level * 0.3;
+  // Squash decay on landing
+  if (!hopPhase && squashT < 1) {
+    squashT = Math.min(1, squashT + 0.07);
+    if (qbertGroup && !dying) {
+      qbertGroup.scale.set(2 - squashT, squashT, 2 - squashT);
     }
-
-    // Update enemies
-    enemies.forEach(e => updateEnemy(e, dt));
-    // Prune dead
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      if (enemies[i].dead) enemies.splice(i, 1);
-    }
-  }
-
-  if (state === 'dead') {
-    swearTimer -= dt;
-  }
-
-  // ── Render ───────────────────────────────────────────────────────────────────
-  // Draw cubes back-to-front
-  for (let r = 0; r < ROWS; r++) {
-    for (let col = 0; col <= r; col++) drawCube(col, r);
-  }
-
-  // Build draw list (Q*bert + enemies), sort by visual row for z-order
-  const drawList = [];
-
-  // Q*bert
-  if (!pFalling) {
-    const { x, y } = characterScreenPos(pCol, pRow, pHop, pHop ? pHop.t : 0, HOP_HEIGHT);
-    const sortRow  = pHop ? pHop.fr + pHop.t : pRow;
-    drawList.push({ type: 'qbert', x, y, sortRow });
   }
 
   // Enemies
   for (const e of enemies) {
-    if (e.dead) continue;
-    const { x, y } = characterScreenPos(e.col, e.row, e.hop, e.hop ? e.hop.t : 0, 32);
-    const sortRow  = e.hop ? e.hop.fr + e.hop.t : e.row;
-    drawList.push({ type: 'enemy', x, y, sortRow, e });
-  }
-
-  drawList.sort((a, b) => a.sortRow - b.sortRow);
-
-  for (const item of drawList) {
-    if (item.type === 'qbert') {
-      const opacity = (state === 'dead' && Math.floor(swearTimer * 8) % 2 === 0) ? 0 : 1;
-      drawQbert(item.x, item.y, pDir, pSq, opacity);
-    } else {
-      drawEnemy(item.x, item.y, item.e.sq, item.e.color);
+    updateEnemy(e, now);
+    // Collision with Q*bert (skip if either has grace period)
+    if (!dying && !hopPhase
+        && now > qbertGraceUntil
+        && now > (e.graceUntil || 0)
+        && e.col === qCol && e.row === qRow) {
+      triggerDeath();
     }
   }
 
-  // Swear bubble on death
-  if (state === 'dead' && swearTimer > 0) {
-    const { cx, cy } = tileToScreen(pCol, pRow);
-    drawBubble(cx + 10, cy - 28, '@!#?@!');
-  }
-
-  // Win flash
-  if (state === 'win') {
-    const flash = Math.sin(now / 80) > 0;
-    if (flash) { ctx.fillStyle = 'rgba(255,255,100,0.15)'; ctx.fillRect(0, 0, GW, GH); }
-  }
-
-  // HUD
-  const totalCubes = [...cubes.values()].filter(c => !c.danger).length;
-  const litCubes   = [...cubes.values()].filter(c => c.lit).length;
-  px(`SCORE ${score}`, 8, 14, 7, '#fff', 'left');
-  px('♥'.repeat(lives), GW - 8, 14, 7, '#ff4444', 'right');
-  px(`LVL ${level + 1}`, GW / 2, 14, 7, '#ffd23f', 'center');
-
-  // Progress bar along bottom
-  const barW = 160, barX = (GW - barW) / 2, barY = GH - 16;
-  ctx.fillStyle = '#333';
-  ctx.fillRect(barX, barY, barW, 6);
-  ctx.fillStyle = pal.on[0];
-  ctx.fillRect(barX, barY, Math.round(barW * litCubes / totalCubes), 6);
-
-  // Controls hint
-  px('← → ↑ ↓ TO HOP', GW / 2, GH - 5, 5, '#555', 'center');
-
-  // Win overlay
-  if (state === 'win') {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, GH / 2 - 40, GW, 80);
-    px('LEVEL CLEAR!', GW / 2, GH / 2 - 12, 12, '#ffd23f', 'center');
-    if (Math.floor(now / 500) % 2 === 0) px('PRESS ANY KEY', GW / 2, GH / 2 + 20, 7, '#fff', 'center');
-  }
+  renderer.render(scene, camera);
 }
 
-// ── Title / Game Over screens ─────────────────────────────────────────────────
-function drawTitle() {
-  ctx.fillStyle = '#0d0028';
-  ctx.fillRect(0, 0, GW, GH);
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', () => {
+  score = 0; lives = 3; level = 0; dying = false;
+  document.getElementById('overlay').classList.add('hidden');
+  gameActive = true;
+  startLevel();
+});
 
-  // Draw a mini pyramid for decoration
-  ctx.save();
-  const miniPal = PALS[0];
-  for (let r = 0; r < 4; r++) {
-    for (let col = 0; col <= r; col++) {
-      const cx = GW / 2 + (2 * col - r) * 18;
-      const cy = 100 + r * 22;
-      // Right face
-      ctx.fillStyle = miniPal.off[2];
-      ctx.beginPath(); ctx.moveTo(cx, cy+9); ctx.lineTo(cx+18, cy); ctx.lineTo(cx+18, cy+14); ctx.lineTo(cx, cy+23); ctx.closePath(); ctx.fill();
-      // Left face
-      ctx.fillStyle = miniPal.off[1];
-      ctx.beginPath(); ctx.moveTo(cx-18, cy); ctx.lineTo(cx, cy+9); ctx.lineTo(cx, cy+23); ctx.lineTo(cx-18, cy+14); ctx.closePath(); ctx.fill();
-      // Top
-      ctx.fillStyle = miniPal.off[0];
-      ctx.beginPath(); ctx.moveTo(cx, cy-9); ctx.lineTo(cx+18, cy); ctx.lineTo(cx, cy+9); ctx.lineTo(cx-18, cy); ctx.closePath(); ctx.fill();
-    }
-  }
-  ctx.restore();
-
-  px('Q*HOPPER', GW / 2, 60, 18, '#ff8800', 'center');
-  ctx.fillStyle = '#ff4466';
-  ctx.font = '8px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  ctx.fillText('a Q*bert tribute', GW / 2, 80);
-
-  ctx.fillStyle = '#aaa';
-  ctx.font = '7px "Press Start 2P"';
-  ctx.fillText('HOP EVERY CUBE TO WIN', GW / 2, 212);
-  ctx.fillText('AVOID ENEMIES & RED TILES', GW / 2, 228);
-  ctx.fillStyle = '#888';
-  ctx.font = '6px "Press Start 2P"';
-  ctx.fillText('↑ UP-RIGHT   ← UP-LEFT', GW / 2, 252);
-  ctx.fillText('↓ DN-LEFT    → DN-RIGHT', GW / 2, 266);
-
-  if (Math.floor(performance.now() / 500) % 2 === 0) {
-    px('PRESS ANY KEY', GW / 2, 310, 9, '#ffd23f', 'center');
-  }
-}
-
-function drawGameOver() {
-  ctx.fillStyle = '#0d0028';
-  ctx.fillRect(0, 0, GW, GH);
-  px('GAME OVER', GW / 2, 140, 16, '#ff2200', 'center');
-  px(`SCORE: ${score}`, GW / 2, 180, 9, '#fff', 'center');
-  px(`LEVEL: ${level + 1}`, GW / 2, 200, 9, '#ffd23f', 'center');
-  if (Math.floor(performance.now() / 500) % 2 === 0) {
-    px('PRESS ANY KEY', GW / 2, 250, 8, '#ff8800', 'center');
-  }
-}
-
-// ── Boot ─────────────────────────────────────────────────────────────────────
-requestAnimationFrame(frame);
+animate(0);
 </script>
 </body>
 </html>
