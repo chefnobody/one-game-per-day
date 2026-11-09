@@ -129,7 +129,7 @@
   </p>
   <button class="btn" id="start-btn">START GAME</button>
   <div class="keys-hint">
-    ↖ W/↑ &nbsp; ↗ D/→ &nbsp; ↙ A/← &nbsp; ↘ S/↓
+    ↖ A/← &nbsp; ↗ W/↑ &nbsp; ↙ S/↓ &nbsp; ↘ D/→
   </div>
 </div>
 
@@ -624,13 +624,14 @@ function startLevel() {
 }
 
 // ─── Input ───────────────────────────────────────────────────────────────────
-// Arrow keys: rotated 45° so UP moves upper-left (toward apex), DOWN moves lower-right
-// WASD: W/A = up-left/down-left, D/S = up-right/down-right  (W↔S, A↔D are pairs)
+// Arrow keys map to Q*bert diagonals (45° rotation):
+//   Left=up-left, Up=up-right, Right=down-right, Down=down-left
+// WASD mirrors the same layout: A=ul, W=ur, D=lr, S=ll
 const KEY_TO_DIR = {
-  ArrowUp:    'ul', KeyW: 'ul', KeyQ: 'ul',
-  ArrowRight: 'ur', KeyD: 'ur', KeyE: 'ur',
-  ArrowDown:  'lr', KeyS: 'lr',
-  ArrowLeft:  'll', KeyA: 'll',
+  ArrowLeft:  'ul', KeyA: 'ul', KeyQ: 'ul',
+  ArrowUp:    'ur', KeyW: 'ur', KeyE: 'ur',
+  ArrowRight: 'lr', KeyD: 'lr',
+  ArrowDown:  'll', KeyS: 'll',
 };
 
 window.addEventListener('keydown', e => {
