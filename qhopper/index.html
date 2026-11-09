@@ -137,13 +137,13 @@
 <script>
 // ─── Constants ───────────────────────────────────────────────────────────────
 const ROWS = 7;
-const CS = 1.8;       // cube size
+const CS = 2.2;       // cube face size
 const CUBE_H = 1.1;   // cube height (flatter for classic Q*bert look)
-const STEP = 2.1;     // grid spacing
+const STEP = 2.6;     // grid spacing
 const HOP_DURATION = 220; // ms
-const HOP_HEIGHT = 2.8;
+const HOP_HEIGHT = 3.2;
 const ENEMY_HOP_MS = 950;
-const CAMSIZE = 11;
+const CAMSIZE = 13;   // orthographic half-height
 
 // Q*bert hop directions: [dcol, drow]
 const DIRS = {
@@ -172,7 +172,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d0028);
 
 const camera = new THREE.OrthographicCamera(-CAMSIZE, CAMSIZE, CAMSIZE, -CAMSIZE, 0.1, 500);
-camera.position.set(50, 50, 50);
+camera.position.set(60, 60, 60);
 camera.lookAt(0, 0, 0);
 
 function resize() {
@@ -185,10 +185,10 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// Lighting
-scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-const sun = new THREE.DirectionalLight(0xffffff, 0.9);
-sun.position.set(10, 20, 10);
+// Lighting — match Tilt*bert exactly
+scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.7);
+sun.position.set(2, 4, 3);
 scene.add(sun);
 
 // ─── Grid Utils ──────────────────────────────────────────────────────────────
@@ -196,17 +196,18 @@ function isValid(col, row) {
   return row >= 0 && row < ROWS && col >= 0 && col <= row;
 }
 
-// Map grid (col,row) → 3D world position (center-top of cube)
+// Map grid (col,row) → 3D world position (center of cube top face)
+// Derived so that from camera (60,60,60):
+//   - apex (0,0) appears at top-center
+//   - ul/ur/ll/lr hops look diagonal, not flat
+//   - left column goes down-left, right column down-right
 function gridToWorld(col, row) {
-  // Classic isometric layout:
-  //   X axis: col increases →
-  //   Z axis: (row-col) increases toward viewer
-  // Center the pyramid around origin
-  const cx = (ROWS - 1) * STEP * 0.5;
-  const cz = 0;
-  const x = col * STEP + (ROWS - 1 - row) * STEP * 0.5 - cx;
-  const z = (row - col) * STEP * 0.5 - (ROWS - 1) * STEP * 0.25 + cz;
-  return new THREE.Vector3(x, 0, z);
+  const OFS = (ROWS - 1) / 3 * STEP; // centroid offset, centers pyramid in screen space
+  return new THREE.Vector3(
+    (row - col) * STEP - OFS,
+    0,
+    col * STEP - OFS
+  );
 }
 
 // ─── BFS Reachability (guarantees no dead tiles) ──────────────────────────────
@@ -355,6 +356,30 @@ function buildQbert() {
   qbertNoseGroup.add(nose);
   qbertGroup.add(qbertNoseGroup);
 
+  // Spindly bird legs
+  const legMat = new THREE.MeshLambertMaterial({ color: 0xcc4400 });
+  function legSeg(ax, ay, az, bx, by, bz, r) {
+    const a = new THREE.Vector3(ax, ay, az);
+    const b = new THREE.Vector3(bx, by, bz);
+    const dir = b.clone().sub(a);
+    const len = dir.length();
+    const geo = new THREE.CylinderGeometry(r, r, len, 6);
+    const m = new THREE.Mesh(geo, legMat);
+    m.position.copy(a).addScaledVector(dir.normalize(), len * 0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    qbertGroup.add(m);
+  }
+  [-1, 1].forEach(s => {
+    // Upper leg: hip outward and down
+    legSeg(s * 0.17, 0.02, 0,   s * 0.30, -0.26, 0,    0.055);
+    // Lower leg: knee inward and down (classic bird "backwards knee")
+    legSeg(s * 0.30, -0.26, 0,  s * 0.14, -0.52, 0.06, 0.045);
+    // Foot: horizontal stub forward
+    legSeg(s * 0.14, -0.52, 0.06,  s * 0.14, -0.52, 0.22, 0.038);
+    // Back spur
+    legSeg(s * 0.14, -0.52, 0.06,  s * 0.10, -0.52, -0.08, 0.030);
+  });
+
   // Drop shadow
   const shadowGeo = new THREE.CircleGeometry(0.42, 16);
   const shadowMat = new THREE.MeshBasicMaterial({
@@ -368,8 +393,9 @@ function buildQbert() {
   scene.add(qbertGroup);
 }
 
-// Nose rotation per hop direction
-const DIR_ROT = { ul: -Math.PI / 2, ur: Math.PI, lr: Math.PI / 2, ll: 0 };
+// Nose rotation per hop direction (derived from new gridToWorld axes)
+// ul→-Z, ur→-X, ll→+X, lr→+Z (nose starts pointing +Z, rotation.x=PI/2)
+const DIR_ROT = { ul: Math.PI, ur: Math.PI / 2, ll: -Math.PI / 2, lr: 0 };
 
 function setQbertAtTile(col, row) {
   const wp = gridToWorld(col, row);
