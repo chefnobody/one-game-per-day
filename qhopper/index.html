@@ -129,7 +129,7 @@
   </p>
   <button class="btn" id="start-btn">START GAME</button>
   <div class="keys-hint">
-    ↖ Q &nbsp; ↗ W &nbsp; ↙ A &nbsp; ↘ S &nbsp;·&nbsp; ARROW KEYS ALSO WORK
+    ↖ W/↑ &nbsp; ↗ D/→ &nbsp; ↙ A/← &nbsp; ↘ S/↓
   </div>
 </div>
 
@@ -196,16 +196,15 @@ function isValid(col, row) {
   return row >= 0 && row < ROWS && col >= 0 && col <= row;
 }
 
-// Map grid (col,row) → 3D world position (center of cube top face)
-// Derived so that from camera (60,60,60):
-//   - apex (0,0) appears at top-center
-//   - ul/ur/ll/lr hops look diagonal, not flat
-//   - left column goes down-left, right column down-right
+// Map grid (col,row) → 3D world position (center of cube)
+// x/z derived so apex (0,0) is at screen-top-center from camera (60,60,60),
+// with left column going down-left and right column going down-right.
+// y = -row * CUBE_H so each row steps DOWN by one cube height (3D staircase).
 function gridToWorld(col, row) {
-  const OFS = (ROWS - 1) / 3 * STEP; // centroid offset, centers pyramid in screen space
+  const OFS = (ROWS - 1) / 3 * STEP;
   return new THREE.Vector3(
     (row - col) * STEP - OFS,
-    0,
+    -row * CUBE_H,
     col * STEP - OFS
   );
 }
@@ -625,11 +624,13 @@ function startLevel() {
 }
 
 // ─── Input ───────────────────────────────────────────────────────────────────
+// Arrow keys: rotated 45° so UP moves upper-left (toward apex), DOWN moves lower-right
+// WASD: W/A = up-left/down-left, D/S = up-right/down-right  (W↔S, A↔D are pairs)
 const KEY_TO_DIR = {
-  ArrowLeft: 'ul', KeyQ: 'ul',
-  ArrowUp:   'ur', KeyW: 'ur',
-  ArrowDown: 'll', KeyA: 'll',
-  ArrowRight:'lr', KeyS: 'lr',
+  ArrowUp:    'ul', KeyW: 'ul', KeyQ: 'ul',
+  ArrowRight: 'ur', KeyD: 'ur', KeyE: 'ur',
+  ArrowDown:  'lr', KeyS: 'lr',
+  ArrowLeft:  'll', KeyA: 'll',
 };
 
 window.addEventListener('keydown', e => {
