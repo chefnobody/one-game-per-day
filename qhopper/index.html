@@ -196,16 +196,16 @@ function isValid(col, row) {
   return row >= 0 && row < ROWS && col >= 0 && col <= row;
 }
 
-// Map grid (col,row) → 3D world position (center of cube)
-// x/z derived so apex (0,0) is at screen-top-center from camera (60,60,60),
-// with left column going down-left and right column going down-right.
-// y = -row * CUBE_H so each row steps DOWN by one cube height (3D staircase).
+// Map grid (col,row) → 3D world position (center of cube).
+// Camera right vector from (60,60,60) is (1,0,-1)/√2, so screen_x = (x-z)/√2.
+// For ul (Δcol=-1,Δrow=-1) to go LEFT: need Δx<Δz → x=col*STEP, z=(row-col)*STEP.
+// y = -row * CUBE_H gives the 3D staircase depth.
 function gridToWorld(col, row) {
   const OFS = (ROWS - 1) / 3 * STEP;
   return new THREE.Vector3(
-    (row - col) * STEP - OFS,
+    col * STEP - OFS,
     -row * CUBE_H,
-    col * STEP - OFS
+    (row - col) * STEP - OFS
   );
 }
 
@@ -392,9 +392,12 @@ function buildQbert() {
   scene.add(qbertGroup);
 }
 
-// Nose rotation per hop direction (derived from new gridToWorld axes)
-// ul→-Z, ur→-X, ll→+X, lr→+Z (nose starts pointing +Z, rotation.x=PI/2)
-const DIR_ROT = { ul: Math.PI, ur: Math.PI / 2, ll: -Math.PI / 2, lr: 0 };
+// Nose rotation per hop direction: x=col*STEP, z=(row-col)*STEP axes
+// ul(Δcol-1,Δrow-1)→Δx=-STEP,Δz=0→nose faces -X→y=-PI/2
+// ur(Δcol0,Δrow-1)→Δx=0,Δz=-STEP→nose faces -Z→y=PI
+// ll(Δcol0,Δrow+1)→Δx=0,Δz=+STEP→nose faces +Z→y=0
+// lr(Δcol+1,Δrow+1)→Δx=+STEP,Δz=0→nose faces +X→y=PI/2
+const DIR_ROT = { ul: -Math.PI / 2, ur: Math.PI, ll: 0, lr: Math.PI / 2 };
 
 function setQbertAtTile(col, row) {
   const wp = gridToWorld(col, row);
