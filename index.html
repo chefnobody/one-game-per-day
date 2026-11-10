@@ -9,102 +9,74 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #0c0c0e;
+      background: #080809;
       color: #e8e8e8;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
-      padding: 4rem 2rem 6rem;
       -webkit-font-smoothing: antialiased;
     }
 
-    header {
-      max-width: 1100px;
-      margin: 0 auto 3.5rem;
+    /* ── Header ── */
+    .site-header {
+      padding: 2.2rem 2.4rem 1.8rem;
+      border-bottom: 1px solid #141416;
     }
-
-    h1 {
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
+    .site-header h1 {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
     }
-
-    .subtitle {
-      font-size: 0.9rem;
+    .site-header p {
+      font-size: 0.72rem;
       font-weight: 300;
-      color: #555;
-      letter-spacing: 0.01em;
+      color: #444;
+      margin-top: 0.25rem;
+      letter-spacing: 0.04em;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
-      max-width: 1100px;
-      margin: 0 auto;
+    /* ── Strip ── */
+    .strip {
+      display: flex;
+      flex-wrap: wrap;
     }
 
     .card {
       display: block;
       text-decoration: none;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #141416;
-      border: 1px solid #1e1e22;
-      cursor: pointer;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      border-color: #333338;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      animation: wobble 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-    }
-
-    @keyframes wobble {
-      0%   { transform: rotate(0deg) scale(1); }
-      15%  { transform: rotate(-1.5deg) scale(1.03); }
-      30%  { transform: rotate(1.2deg) scale(1.03); }
-      45%  { transform: rotate(-0.8deg) scale(1.02); }
-      60%  { transform: rotate(0.4deg) scale(1.01); }
-      100% { transform: rotate(0deg) scale(1); }
-    }
-
-    .card-img-wrap {
       position: relative;
-      aspect-ratio: 16 / 9;
       overflow: hidden;
-      background: #0a0a0c;
+      cursor: pointer;
+      /* each card is square; 3 per row on large screens */
+      flex: 1 1 33.333%;
+      min-width: 260px;
+      aspect-ratio: 1 / 1;
+      background: #0c0c0e;
     }
 
-    .card-img-wrap img {
+    /* right border between cards, bottom border on each row */
+    .card:not(:last-child) { border-right: 1px solid #141416; }
+    .card { border-bottom: 1px solid #141416; }
+
+    .card svg {
       width: 100%;
       height: 100%;
-      object-fit: cover;
       display: block;
-      transition: transform 0.4s ease, filter 0.3s ease;
+      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  filter 0.3s ease;
     }
-
-    .card:hover .card-img-wrap img {
+    .card:hover svg {
       transform: scale(1.03);
-      filter: brightness(1.06);
+      filter: brightness(1.08);
     }
 
-    .card-img-wrap .placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-    }
-
+    /* ── Pills ── */
     .pills {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -113,65 +85,304 @@
     }
 
     .pill {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 500;
-      padding: 4px 10px;
+      padding: 4px 11px;
       border-radius: 999px;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       white-space: nowrap;
-      letter-spacing: 0.01em;
+      letter-spacing: 0.02em;
     }
-
     .pill-name {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255,255,255,0.14);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255,255,255,0.22);
     }
-
     .pill-date {
-      background: rgba(0, 0, 0, 0.5);
-      color: #888;
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(0,0,0,0.55);
+      color: #777;
+      border: 1px solid rgba(255,255,255,0.07);
       font-weight: 300;
     }
   </style>
 </head>
 <body>
-  <header>
+
+  <header class="site-header">
     <h1>One Game Per Day</h1>
-    <p class="subtitle">a small experiment in daily game-making</p>
+    <p>a small experiment in daily game-making</p>
   </header>
 
-  <main class="grid">
+  <main class="strip">
 
+    <!-- ── Tilt*bert ── -->
     <a href="./ball-balance/" class="card">
-      <div class="card-img-wrap">
-        <img src="./ball-balance/screenshot.png" alt="Tilt*bert">
-        <div class="pills">
-          <span class="pill pill-name">Tilt*bert</span>
-          <span class="pill pill-date">Nov 6, 2026</span>
-        </div>
+      <!-- Isometric board with rolling orange ball -->
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bg1" cx="45%" cy="40%" r="65%">
+            <stop offset="0%" stop-color="#2a0a52"/>
+            <stop offset="100%" stop-color="#06020e"/>
+          </radialGradient>
+          <radialGradient id="ball1" cx="38%" cy="32%" r="60%">
+            <stop offset="0%" stop-color="#ffaa44"/>
+            <stop offset="100%" stop-color="#c84400"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="400" fill="url(#bg1)"/>
+
+        <!-- Isometric board tiles (top face = rhombus) -->
+        <!-- Row 0 -->
+        <polygon points="200,110 268,148 200,186 132,148" fill="#3a1f8c" stroke="#1a0d44" stroke-width="1"/>
+        <!-- Row 1 left -->
+        <polygon points="132,148 200,186 200,230 132,192" fill="#2a1266" stroke="#1a0d44" stroke-width="1"/>
+        <!-- Row 1 right -->
+        <polygon points="200,186 268,148 268,192 200,230" fill="#1e0d50" stroke="#1a0d44" stroke-width="1"/>
+
+        <!-- Second level back -->
+        <polygon points="132,148 200,110 200,154 132,192" fill="#281060" stroke="#1a0d44" stroke-width="0.5"/>
+        <polygon points="268,148 200,110 200,154 268,192" fill="#1c0a44" stroke="#1a0d44" stroke-width="0.5"/>
+
+        <!-- More tiles lower -->
+        <polygon points="132,192 200,230 200,274 132,236" fill="#2a1266" stroke="#1a0d44" stroke-width="1"/>
+        <polygon points="200,230 268,192 268,236 200,274" fill="#1e0d50" stroke="#1a0d44" stroke-width="1"/>
+        <polygon points="132,236 200,274 268,236 200,198" fill="#341880" stroke="#1a0d44" stroke-width="1" opacity="0.6"/>
+
+        <!-- Lit tile highlight -->
+        <polygon points="200,186 268,148 268,192 200,230" fill="#ff9922" opacity="0.25" stroke="#ff8800" stroke-width="1"/>
+
+        <!-- Ball shadow -->
+        <ellipse cx="210" cy="183" rx="22" ry="10" fill="#000" opacity="0.4"/>
+
+        <!-- Ball -->
+        <circle cx="208" cy="168" r="26" fill="url(#ball1)"/>
+        <!-- Specular -->
+        <ellipse cx="200" cy="160" rx="9" ry="6" fill="#ffe0aa" opacity="0.45" transform="rotate(-20,200,160)"/>
+        <!-- Eyes -->
+        <circle cx="202" cy="162" r="5" fill="#fff"/>
+        <circle cx="216" cy="160" r="5" fill="#fff"/>
+        <circle cx="204" cy="163" r="2.5" fill="#111"/>
+        <circle cx="218" cy="161" r="2.5" fill="#111"/>
+        <!-- Nose -->
+        <ellipse cx="209" cy="170" rx="4" ry="3" fill="#ff6600" transform="rotate(10,209,170)"/>
+
+        <!-- Weather particles (rain dots) -->
+        <line x1="80" y1="60" x2="74" y2="90" stroke="#6688ff" stroke-width="1.5" opacity="0.35"/>
+        <line x1="310" y1="40" x2="304" y2="70" stroke="#6688ff" stroke-width="1.5" opacity="0.35"/>
+        <line x1="350" y1="130" x2="344" y2="160" stroke="#6688ff" stroke-width="1.5" opacity="0.25"/>
+        <line x1="50" y1="200" x2="44" y2="230" stroke="#6688ff" stroke-width="1.5" opacity="0.2"/>
+        <line x1="370" y1="280" x2="364" y2="310" stroke="#6688ff" stroke-width="1.5" opacity="0.2"/>
+      </svg>
+      <div class="pills">
+        <span class="pill pill-name">Tilt*bert</span>
+        <span class="pill pill-date">Nov 6, 2026</span>
       </div>
     </a>
 
+    <!-- ── Q*HOPPER ── -->
     <a href="./qhopper/" class="card">
-      <div class="card-img-wrap">
-        <img src="./qhopper/screenshot.png" alt="Q*HOPPER">
-        <div class="pills">
-          <span class="pill pill-name">Q*HOPPER</span>
-          <span class="pill pill-date">Nov 8, 2026</span>
-        </div>
+      <!-- Isometric stepped pyramid with Q*bert character -->
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bg2" cx="50%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#120040"/>
+            <stop offset="100%" stop-color="#04000f"/>
+          </radialGradient>
+          <radialGradient id="qball" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#ffcc66"/>
+            <stop offset="100%" stop-color="#cc5500"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="400" fill="url(#bg2)"/>
+
+        <!-- Pyramid cubes — isometric, 4 rows visible -->
+        <!-- Helper: cube top=rhombus, left=dark parallelogram, right=medium -->
+        <!-- Row 0 (apex), 1 cube -->
+        <!-- top -->
+        <polygon points="200,80  232,98  200,116  168,98"  fill="#6644cc"/>
+        <!-- right -->
+        <polygon points="200,116 232,98  232,134  200,152" fill="#4422aa"/>
+        <!-- left -->
+        <polygon points="200,116 168,98  168,134  200,152" fill="#2a1266"/>
+
+        <!-- Row 1, 2 cubes -->
+        <!-- cube (0,1) -->
+        <polygon points="168,116 200,98  200,116  168,134" fill="#6644cc" opacity="0.9"/><!-- actually top -->
+        <polygon points="168,98  200,80  200,116  168,116" fill="#6644cc" opacity="0.5"/>
+
+        <polygon points="168,134 200,116 200,152 168,170" fill="#2a1266"/>
+        <polygon points="200,116 232,134 232,170 200,152" fill="#4422aa" opacity="0.7"/>
+        <!-- cube top -->
+        <polygon points="136,116 168,98  200,116  168,134" fill="#5533bb"/>
+        <!-- right -->
+        <polygon points="168,134 200,116 200,152 168,170" fill="#2a1266"/>
+        <!-- cube 2 top -->
+        <polygon points="200,116 232,98  264,116  232,134" fill="#5533bb"/>
+        <polygon points="232,134 264,116 264,152 232,170" fill="#2a1266"/>
+        <polygon points="200,152 232,134 232,170 200,186" fill="#3a2288"/>
+
+        <!-- Row 2, 3 cubes — lit gold color -->
+        <polygon points="104,134 136,116 168,134 136,152" fill="#c07800"/>
+        <polygon points="136,152 168,134 168,170 136,188" fill="#7a4a00"/>
+        <polygon points="104,170 136,152 136,188 104,206" fill="#503000"/>
+
+        <polygon points="168,134 200,116 232,134 200,152" fill="#dd9900"/>
+        <polygon points="200,152 232,134 232,170 200,188" fill="#8a5500"/>
+        <polygon points="168,170 200,152 200,188 168,206" fill="#6a4000"/>
+
+        <polygon points="232,134 264,116 296,134 264,152" fill="#c07800"/>
+        <polygon points="264,152 296,134 296,170 264,188" fill="#7a4a00"/>
+        <polygon points="232,170 264,152 264,188 232,206" fill="#503000"/>
+
+        <!-- Row 3, 4 cubes — unlit purple -->
+        <polygon points="72,152  104,134 136,152 104,170" fill="#4422aa"/>
+        <polygon points="104,170 136,152 136,188 104,206" fill="#221155"/>
+        <polygon points="72,188  104,170 104,206 72,224"  fill="#1a0d44"/>
+
+        <polygon points="136,152 168,134 200,152 168,170" fill="#5533bb"/>
+        <polygon points="168,170 200,152 200,188 168,206" fill="#2a1266"/>
+        <polygon points="136,188 168,170 168,206 136,224" fill="#1e0d50"/>
+
+        <polygon points="200,152 232,134 264,152 232,170" fill="#4422aa"/>
+        <polygon points="232,170 264,152 264,188 232,206" fill="#221155"/>
+        <polygon points="200,188 232,170 232,206 200,224" fill="#1a0d44"/>
+
+        <polygon points="264,152 296,134 328,152 296,170" fill="#5533bb"/>
+        <polygon points="296,170 328,152 328,188 296,206" fill="#2a1266"/>
+        <polygon points="264,188 296,170 296,206 264,224" fill="#1e0d50"/>
+
+        <!-- Enemy (red sphere) -->
+        <circle cx="264" cy="140" r="13" fill="#ff2244"/>
+        <circle cx="260" cy="136" r="4" fill="#fff" opacity="0.9"/>
+        <circle cx="268" cy="136" r="4" fill="#fff" opacity="0.9"/>
+        <circle cx="261" cy="137" r="2" fill="#111"/>
+        <circle cx="269" cy="137" r="2" fill="#111"/>
+
+        <!-- Q*bert (orange sphere on apex) -->
+        <ellipse cx="200" cy="78" rx="13" ry="6" fill="#000" opacity="0.35"/>
+        <circle cx="200" cy="66" r="16" fill="url(#qball)"/>
+        <ellipse cx="195" cy="60" rx="5" ry="3.5" fill="#ffe0aa" opacity="0.4" transform="rotate(-15,195,60)"/>
+        <circle cx="194" cy="62" r="3.2" fill="#fff"/>
+        <circle cx="206" cy="61" r="3.2" fill="#fff"/>
+        <circle cx="195" cy="63" r="1.6" fill="#111"/>
+        <circle cx="207" cy="62" r="1.6" fill="#111"/>
+        <!-- Nose -->
+        <ellipse cx="200" cy="69" rx="3" ry="2.2" fill="#ff5500"/>
+
+        <!-- Stars -->
+        <circle cx="50"  cy="30"  r="1.2" fill="#fff" opacity="0.6"/>
+        <circle cx="340" cy="50"  r="1"   fill="#fff" opacity="0.5"/>
+        <circle cx="370" cy="20"  r="0.8" fill="#fff" opacity="0.4"/>
+        <circle cx="30"  cy="340" r="1"   fill="#fff" opacity="0.3"/>
+        <circle cx="360" cy="360" r="1.2" fill="#fff" opacity="0.4"/>
+      </svg>
+      <div class="pills">
+        <span class="pill pill-name">Q*HOPPER</span>
+        <span class="pill pill-date">Nov 8, 2026</span>
       </div>
     </a>
 
+    <!-- ── Bug Splat ── -->
     <a href="./bug-splat/" class="card">
-      <div class="card-img-wrap" style="background: linear-gradient(160deg,#0d1a0d 0%,#060e06 60%,#0d0d1a 100%);">
-        <div class="placeholder">🐛</div>
-        <div class="pills">
-          <span class="pill pill-name">Bug Splat</span>
-          <span class="pill pill-date">Nov 6, 2026</span>
-        </div>
+      <!-- Top-down road with bugs on windshield -->
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a0a0a"/>
+            <stop offset="100%" stop-color="#161616"/>
+          </linearGradient>
+          <radialGradient id="splat1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#44cc22" stop-opacity="0.9"/>
+            <stop offset="70%" stop-color="#228800" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#114400" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="splat2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#66ee33" stop-opacity="0.85"/>
+            <stop offset="60%" stop-color="#33aa11" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#114400" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="headlights" cx="50%" cy="100%" r="80%">
+            <stop offset="0%" stop-color="#ffffcc" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#ffffcc" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Road surface -->
+        <rect width="400" height="400" fill="url(#road)"/>
+
+        <!-- Road edges / curbs -->
+        <rect x="0"   y="0" width="60"  height="400" fill="#0d1a0d"/>
+        <rect x="340" y="0" width="60"  height="400" fill="#0d1a0d"/>
+        <!-- Curb markings -->
+        <rect x="58"  y="0" width="3" height="400" fill="#ffffff" opacity="0.08"/>
+        <rect x="339" y="0" width="3" height="400" fill="#ffffff" opacity="0.08"/>
+
+        <!-- Lane dashes -->
+        <rect x="130" y="0"   width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="130" y="90"  width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="130" y="180" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="130" y="270" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="130" y="360" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="267" y="0"   width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="267" y="90"  width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="267" y="180" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="267" y="270" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <rect x="267" y="360" width="3" height="60"  fill="#fff" opacity="0.15"/>
+
+        <!-- Headlight glow from car -->
+        <rect x="61" y="260" width="278" height="140" fill="url(#headlights)"/>
+
+        <!-- Car (top-down view) -->
+        <rect x="150" y="290" width="100" height="80"  rx="6" fill="#1a1a2e"/>
+        <rect x="158" y="296" width="84"  height="68"  rx="4" fill="#222244"/>
+        <!-- Windshield -->
+        <rect x="162" y="298" width="76"  height="28"  rx="3" fill="#2a3a5a" opacity="0.9"/>
+        <!-- Tail lights -->
+        <rect x="152" y="358" width="22" height="8" rx="2" fill="#ff2200" opacity="0.9"/>
+        <rect x="226" y="358" width="22" height="8" rx="2" fill="#ff2200" opacity="0.9"/>
+
+        <!-- Bug splats on windshield -->
+        <!-- Big splat center -->
+        <circle cx="200" cy="310" r="18" fill="url(#splat1)"/>
+        <ellipse cx="200" cy="310" rx="6"  ry="4"  fill="#55ff22" opacity="0.6" transform="rotate(30,200,310)"/>
+        <ellipse cx="207" cy="305" rx="4"  ry="2"  fill="#88ff44" opacity="0.5" transform="rotate(-20,207,305)"/>
+        <ellipse cx="193" cy="315" rx="3"  ry="2"  fill="#44cc11" opacity="0.6"/>
+        <!-- Bug body remnants -->
+        <ellipse cx="200" cy="310" rx="3"  ry="4.5" fill="#1a5500" opacity="0.8"/>
+        <ellipse cx="197" cy="308" rx="2"  ry="1"   fill="#226600" opacity="0.7" transform="rotate(-40,197,308)"/>
+        <ellipse cx="203" cy="312" rx="2"  ry="1"   fill="#226600" opacity="0.7" transform="rotate(40,203,312)"/>
+
+        <!-- Small splat top-left of windshield -->
+        <circle cx="172" cy="302" r="10" fill="url(#splat2)"/>
+        <ellipse cx="172" cy="302" rx="3"  ry="4"  fill="#1a4400" opacity="0.8"/>
+        <ellipse cx="169" cy="300" rx="2"  ry="1"  fill="#33aa00" opacity="0.6" transform="rotate(-50,169,300)"/>
+        <ellipse cx="175" cy="304" rx="2"  ry="1"  fill="#33aa00" opacity="0.6" transform="rotate(50,175,304)"/>
+
+        <!-- Small splat top-right -->
+        <circle cx="226" cy="306" r="8" fill="url(#splat2)" opacity="0.8"/>
+        <ellipse cx="226" cy="306" rx="2.5" ry="3.5" fill="#1a4400" opacity="0.7"/>
+
+        <!-- Bugs in air (approaching) -->
+        <!-- Bug 1 -->
+        <ellipse cx="140" cy="210" rx="6"  ry="4"  fill="#44bb22"/>
+        <ellipse cx="134" cy="209" rx="4"  ry="2"  fill="#44bb22" opacity="0.7" transform="rotate(-30,134,209)"/>
+        <ellipse cx="146" cy="211" rx="4"  ry="2"  fill="#44bb22" opacity="0.7" transform="rotate(30,146,211)"/>
+        <ellipse cx="140" cy="210" rx="2"  ry="3"  fill="#1a5500"/>
+        <!-- Bug 2 -->
+        <ellipse cx="260" cy="180" rx="5"  ry="3.5" fill="#55cc33"/>
+        <ellipse cx="254" cy="179" rx="3.5" ry="1.8" fill="#55cc33" opacity="0.7" transform="rotate(-25,254,179)"/>
+        <ellipse cx="266" cy="181" rx="3.5" ry="1.8" fill="#55cc33" opacity="0.7" transform="rotate(25,266,181)"/>
+        <ellipse cx="260" cy="180" rx="1.8" ry="2.8" fill="#1a5500"/>
+        <!-- Bug 3 -->
+        <ellipse cx="195" cy="235" rx="5"  ry="3.5" fill="#44bb22"/>
+        <ellipse cx="189" cy="234" rx="3.5" ry="1.8" fill="#44bb22" opacity="0.7" transform="rotate(-28,189,234)"/>
+        <ellipse cx="201" cy="236" rx="3.5" ry="1.8" fill="#44bb22" opacity="0.7" transform="rotate(28,201,236)"/>
+        <ellipse cx="195" cy="235" rx="1.8" ry="2.8" fill="#1a5500"/>
+      </svg>
+      <div class="pills">
+        <span class="pill pill-name">Bug Splat</span>
+        <span class="pill pill-date">Nov 6, 2026</span>
       </div>
     </a>
 

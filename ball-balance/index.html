@@ -8,12 +8,17 @@
 :root{--bg1:#35105e;--bg2:#08020f;--fg:#fff3d6;--org:#ff7a1a;--cy:#4fe3ff;--pk:#ff4fa3;--yl:#ffd23f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html,body{height:100%;margin:0;overflow:hidden;color-scheme:dark;background:radial-gradient(ellipse at 50% 35%,var(--bg1),var(--bg2));color:var(--fg);font-family:'Press Start 2P',ui-monospace,Menlo,monospace;touch-action:none;user-select:none;-webkit-user-select:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-#hud{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);display:flex;justify-content:space-between;gap:8px;padding:12px 14px;font-size:10px;line-height:1.6;pointer-events:none;text-shadow:2px 2px 0 #000}
+#game-nav{position:fixed;top:0;left:0;right:0;height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(5,0,15,0.82);border-bottom:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:30;font-family:Inter,system-ui,sans-serif;font-size:10px}
+#game-nav a{color:rgba(255,255,255,0.55);text-decoration:none;letter-spacing:0.06em;font-weight:400}
+#game-nav a:hover{color:#fff}
+.nav-title{position:absolute;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.7);letter-spacing:0.14em;font-weight:500;text-transform:uppercase;font-size:9px}
+.nav-meta{color:rgba(255,255,255,0.3);font-weight:300;letter-spacing:0.04em}
+#hud{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 36px);display:flex;justify-content:space-between;gap:8px;padding:12px 14px;font-size:10px;line-height:1.6;pointer-events:none;text-shadow:2px 2px 0 #000}
 #hud b{color:var(--yl);font-weight:400;display:block}
 #hud span{color:var(--cy)}
-#env{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 64px);text-align:center;font-size:9px;color:var(--cy);text-shadow:2px 2px 0 #000;pointer-events:none;min-height:14px}
+#env{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 100px);text-align:center;font-size:9px;color:var(--cy);text-shadow:2px 2px 0 #000;pointer-events:none;min-height:14px}
 .ar{display:inline-block;width:0;height:0;border-left:12px solid var(--yl);border-top:6px solid transparent;border-bottom:6px solid transparent;vertical-align:middle;margin-left:8px}
-#mute{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 62px);font:inherit;font-size:8px;padding:7px 8px;background:#2b1250;color:var(--cy);border:2px solid var(--cy);cursor:pointer}
+#mute{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 98px);font:inherit;font-size:8px;padding:7px 8px;background:#2b1250;color:var(--cy);border:2px solid var(--cy);cursor:pointer}
 #hint{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));text-align:center;font-size:8px;color:#b9a6d6;pointer-events:none;line-height:1.8;padding:0 60px}
 #bub{position:fixed;left:50%;top:38%;transform:translateX(-50%);background:#fff;color:#000;font-size:18px;padding:14px 18px;border:4px solid #000;box-shadow:6px 6px 0 var(--pk);display:none;pointer-events:none}
 #ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,2,15,.82);padding:16px;text-align:center}
@@ -27,6 +32,11 @@ h1{font-weight:400;font-size:clamp(26px,7vw,52px);margin:0 0 18px;color:var(--or
 .yb{position:fixed;bottom:calc(46px + env(safe-area-inset-bottom,0px));width:52px;height:52px;font:inherit;font-size:20px;background:#2b1250;color:var(--cy);border:3px solid var(--cy);border-radius:50%}
 #yl{left:14px}#yr{right:14px}
 </style></head><body>
+<div id="game-nav">
+  <a href="../">← Back</a>
+  <span class="nav-title">Tilt*bert</span>
+  <span class="nav-meta">Nov 6, 2026</span>
+</div>
 <div id="hud"><div>LEVEL<b id="hl">1/7</b></div><div>TIME<b id="ht">0.0</b></div><div>FALLS<b id="hf">0</b></div><div>SCORE<b id="hs">0</b></div></div>
 <div id="bub">@!#?@!</div>
 <div id="env"></div>
