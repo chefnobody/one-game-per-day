@@ -118,61 +118,141 @@
 
     <!-- ── Tilt*bert ── -->
     <a href="./ball-balance/" class="card">
-      <!-- Isometric board with rolling orange ball -->
+      <!-- Flat isometric board that tilts; orange ball rolls across colored tiles -->
       <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="bg1" cx="45%" cy="40%" r="65%">
+          <radialGradient id="bg1" cx="45%" cy="38%" r="70%">
             <stop offset="0%" stop-color="#2a0a52"/>
-            <stop offset="100%" stop-color="#06020e"/>
+            <stop offset="100%" stop-color="#05020e"/>
           </radialGradient>
-          <radialGradient id="ball1" cx="38%" cy="32%" r="60%">
-            <stop offset="0%" stop-color="#ffaa44"/>
-            <stop offset="100%" stop-color="#c84400"/>
+          <radialGradient id="ball1" cx="36%" cy="30%" r="58%">
+            <stop offset="0%" stop-color="#ffcc55"/>
+            <stop offset="55%" stop-color="#ff8800"/>
+            <stop offset="100%" stop-color="#b83300"/>
           </radialGradient>
         </defs>
         <rect width="400" height="400" fill="url(#bg1)"/>
 
-        <!-- Isometric board tiles (top face = rhombus) -->
-        <!-- Row 0 -->
-        <polygon points="200,110 268,148 200,186 132,148" fill="#3a1f8c" stroke="#1a0d44" stroke-width="1"/>
-        <!-- Row 1 left -->
-        <polygon points="132,148 200,186 200,230 132,192" fill="#2a1266" stroke="#1a0d44" stroke-width="1"/>
-        <!-- Row 1 right -->
-        <polygon points="200,186 268,148 268,192 200,230" fill="#1e0d50" stroke="#1a0d44" stroke-width="1"/>
+        <!--
+          Flat isometric board: 5 cols × 4 rows of tiles.
+          Tile top face = rhombus. Front-right + front-left side strips = thin dark strips.
+          Board is slightly tilted (like it's balanced on one edge).
 
-        <!-- Second level back -->
-        <polygon points="132,148 200,110 200,154 132,192" fill="#281060" stroke="#1a0d44" stroke-width="0.5"/>
-        <polygon points="268,148 200,110 200,154 268,192" fill="#1c0a44" stroke="#1a0d44" stroke-width="0.5"/>
+          Formula:  sx = 200 + (col - row) * 26
+                    sy = 175 + (col + row) * 14
+          Tile half-widths: tw=26 (x), th=14 (y), side height sh=9
+          Rhombus corners: top=(sx,sy-th)  right=(sx+tw,sy)  bottom=(sx,sy+th)  left=(sx-tw,sy)
+        -->
 
-        <!-- More tiles lower -->
-        <polygon points="132,192 200,230 200,274 132,236" fill="#2a1266" stroke="#1a0d44" stroke-width="1"/>
-        <polygon points="200,230 268,192 268,236 200,274" fill="#1e0d50" stroke="#1a0d44" stroke-width="1"/>
-        <polygon points="132,236 200,274 268,236 200,198" fill="#341880" stroke="#1a0d44" stroke-width="1" opacity="0.6"/>
+        <!-- Draw back tiles first (row 0, all cols) -->
+        <!-- (col=0,row=0) center=(200,175)  unlit -->
+        <polygon points="200,161 226,175 200,189 174,175" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,189 226,175 226,184 200,198" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="174,175 200,189 200,198 174,184" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=1,row=0) center=(226,189)  lit gold -->
+        <polygon points="226,175 252,189 226,203 200,189" fill="#f0a020" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="226,203 252,189 252,198 226,212" fill="#704000" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="200,189 226,203 226,212 200,198" fill="#b06800" stroke="#6a4800" stroke-width="0.8"/>
+        <!-- (col=2,row=0) center=(252,203)  lit gold -->
+        <polygon points="252,189 278,203 252,217 226,203" fill="#f0a020" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="252,217 278,203 278,212 252,226" fill="#704000" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="226,203 252,217 252,226 226,212" fill="#b06800" stroke="#6a4800" stroke-width="0.8"/>
+        <!-- (col=3,row=0) center=(278,217)  unlit -->
+        <polygon points="278,203 304,217 278,231 252,217" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="278,231 304,217 304,226 278,240" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="252,217 278,231 278,240 252,226" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=4,row=0) center=(304,231)  unlit -->
+        <polygon points="304,217 330,231 304,245 278,231" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="304,245 330,231 330,240 304,254" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="278,231 304,245 304,254 278,240" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
 
-        <!-- Lit tile highlight -->
-        <polygon points="200,186 268,148 268,192 200,230" fill="#ff9922" opacity="0.25" stroke="#ff8800" stroke-width="1"/>
+        <!-- Row 1 -->
+        <!-- (col=0,row=1) center=(174,189)  lit gold -->
+        <polygon points="174,175 200,189 174,203 148,189" fill="#f0a020" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="174,203 200,189 200,198 174,212" fill="#704000" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="148,189 174,203 174,212 148,198" fill="#b06800" stroke="#6a4800" stroke-width="0.8"/>
+        <!-- (col=1,row=1) center=(200,203)  lit gold -->
+        <polygon points="200,189 226,203 200,217 174,203" fill="#f0a020" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="200,217 226,203 226,212 200,226" fill="#704000" stroke="#6a4800" stroke-width="0.8"/>
+        <polygon points="174,203 200,217 200,226 174,212" fill="#b06800" stroke="#6a4800" stroke-width="0.8"/>
+        <!-- (col=2,row=1) center=(226,217)  unlit -->
+        <polygon points="226,203 252,217 226,231 200,217" fill="#5533cc" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="226,231 252,217 252,226 226,240" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,217 226,231 226,240 200,226" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=3,row=1) center=(252,231)  unlit -->
+        <polygon points="252,217 278,231 252,245 226,231" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="252,245 278,231 278,240 252,254" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="226,231 252,245 252,254 226,240" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=4,row=1) center=(278,245)  unlit -->
+        <polygon points="278,231 304,245 278,259 252,245" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="278,259 304,245 304,254 278,268" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="252,245 278,259 278,268 252,254" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
 
-        <!-- Ball shadow -->
-        <ellipse cx="210" cy="183" rx="22" ry="10" fill="#000" opacity="0.4"/>
+        <!-- Row 2 -->
+        <!-- (col=0,row=2) center=(148,203)  unlit -->
+        <polygon points="148,189 174,203 148,217 122,203" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="148,217 174,203 174,212 148,226" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="122,203 148,217 148,226 122,212" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=1,row=2) center=(174,217)  unlit -->
+        <polygon points="174,203 200,217 174,231 148,217" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="174,231 200,217 200,226 174,240" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="148,217 174,231 174,240 148,226" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=2,row=2) center=(200,231)  unlit -->
+        <polygon points="200,217 226,231 200,245 174,231" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,245 226,231 226,240 200,254" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="174,231 200,245 200,254 174,240" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=3,row=2) center=(226,245)  unlit -->
+        <polygon points="226,231 252,245 226,259 200,245" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="226,259 252,245 252,254 226,268" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,245 226,259 226,268 200,254" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=4,row=2) center=(252,259)  unlit -->
+        <polygon points="252,245 278,259 252,273 226,259" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="252,273 278,259 278,268 252,282" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="226,259 252,273 252,282 226,268" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
 
+        <!-- Row 3 (front row — unlit) -->
+        <!-- (col=0,row=3) center=(122,217) -->
+        <polygon points="122,203 148,217 122,231 96,217" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="122,231 148,217 148,226 122,240" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="96,217 122,231 122,240 96,226" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=1,row=3) center=(148,231) -->
+        <polygon points="148,217 174,231 148,245 122,231" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="148,245 174,231 174,240 148,254" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="122,231 148,245 148,254 122,240" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=2,row=3) center=(174,245) -->
+        <polygon points="174,231 200,245 174,259 148,245" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="174,259 200,245 200,254 174,268" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="148,245 174,259 174,268 148,254" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=3,row=3) center=(200,259) -->
+        <polygon points="200,245 226,259 200,273 174,259" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,273 226,259 226,268 200,282" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="174,259 200,273 200,282 174,268" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+        <!-- (col=4,row=3) center=(226,273) -->
+        <polygon points="226,259 252,273 226,287 200,273" fill="#3a1f9c" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="226,287 252,273 252,282 226,296" fill="#1e0f5a" stroke="#12094a" stroke-width="0.8"/>
+        <polygon points="200,273 226,287 226,296 200,282" fill="#2a1266" stroke="#12094a" stroke-width="0.8"/>
+
+        <!-- Ball shadow on lit tile (col=1,row=1) -->
+        <ellipse cx="200" cy="206" rx="20" ry="9" fill="#000" opacity="0.45"/>
         <!-- Ball -->
-        <circle cx="208" cy="168" r="26" fill="url(#ball1)"/>
-        <!-- Specular -->
-        <ellipse cx="200" cy="160" rx="9" ry="6" fill="#ffe0aa" opacity="0.45" transform="rotate(-20,200,160)"/>
+        <circle cx="200" cy="190" r="23" fill="url(#ball1)"/>
+        <ellipse cx="193" cy="184" rx="8" ry="5" fill="#ffe8aa" opacity="0.4" transform="rotate(-18,193,184)"/>
         <!-- Eyes -->
-        <circle cx="202" cy="162" r="5" fill="#fff"/>
-        <circle cx="216" cy="160" r="5" fill="#fff"/>
-        <circle cx="204" cy="163" r="2.5" fill="#111"/>
-        <circle cx="218" cy="161" r="2.5" fill="#111"/>
+        <circle cx="194" cy="186" r="4.5" fill="#fff"/>
+        <circle cx="207" cy="184" r="4.5" fill="#fff"/>
+        <circle cx="195" cy="187" r="2.2" fill="#111"/>
+        <circle cx="208" cy="185" r="2.2" fill="#111"/>
         <!-- Nose -->
-        <ellipse cx="209" cy="170" rx="4" ry="3" fill="#ff6600" transform="rotate(10,209,170)"/>
+        <ellipse cx="201" cy="193" rx="3.5" ry="2.5" fill="#ff5500"/>
 
-        <!-- Weather particles (rain dots) -->
-        <line x1="80" y1="60" x2="74" y2="90" stroke="#6688ff" stroke-width="1.5" opacity="0.35"/>
-        <line x1="310" y1="40" x2="304" y2="70" stroke="#6688ff" stroke-width="1.5" opacity="0.35"/>
-        <line x1="350" y1="130" x2="344" y2="160" stroke="#6688ff" stroke-width="1.5" opacity="0.25"/>
-        <line x1="50" y1="200" x2="44" y2="230" stroke="#6688ff" stroke-width="1.5" opacity="0.2"/>
-        <line x1="370" y1="280" x2="364" y2="310" stroke="#6688ff" stroke-width="1.5" opacity="0.2"/>
+        <!-- Rain streaks -->
+        <line x1="90"  y1="50"  x2="84"  y2="80"  stroke="#7799ff" stroke-width="1.5" opacity="0.4"/>
+        <line x1="320" y1="30"  x2="314" y2="60"  stroke="#7799ff" stroke-width="1.5" opacity="0.4"/>
+        <line x1="360" y1="120" x2="354" y2="150" stroke="#7799ff" stroke-width="1.5" opacity="0.3"/>
+        <line x1="55"  y1="310" x2="49"  y2="340" stroke="#7799ff" stroke-width="1.5" opacity="0.25"/>
+        <line x1="340" y1="340" x2="334" y2="370" stroke="#7799ff" stroke-width="1.5" opacity="0.2"/>
+        <line x1="150" y1="60"  x2="144" y2="90"  stroke="#7799ff" stroke-width="1"   opacity="0.25"/>
+        <line x1="270" y1="80"  x2="264" y2="110" stroke="#7799ff" stroke-width="1"   opacity="0.3"/>
       </svg>
       <div class="pills">
         <span class="pill pill-name">Tilt*bert</span>
@@ -182,100 +262,117 @@
 
     <!-- ── Q*HOPPER ── -->
     <a href="./qhopper/" class="card">
-      <!-- Isometric stepped pyramid with Q*bert character -->
+      <!--
+        Accurate 7-row stepped pyramid using the game's own grid formula:
+          sx = 200 + (2*col - row) * 22
+          sy =  50 + row * 33          (th=11, ch=22, step=th+ch=33)
+        Each cube: left face, right face, top face.
+        Rows drawn back-to-front (row 6 first so row 0 is on top).
+      -->
       <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="bg2" cx="50%" cy="35%" r="70%">
             <stop offset="0%" stop-color="#120040"/>
             <stop offset="100%" stop-color="#04000f"/>
           </radialGradient>
-          <radialGradient id="qball" cx="35%" cy="30%" r="60%">
-            <stop offset="0%" stop-color="#ffcc66"/>
-            <stop offset="100%" stop-color="#cc5500"/>
+          <radialGradient id="qball" cx="35%" cy="28%" r="58%">
+            <stop offset="0%" stop-color="#ffcc55"/>
+            <stop offset="55%" stop-color="#ff8800"/>
+            <stop offset="100%" stop-color="#b83300"/>
           </radialGradient>
         </defs>
         <rect width="400" height="400" fill="url(#bg2)"/>
 
-        <!-- Pyramid cubes — isometric, 4 rows visible -->
-        <!-- Helper: cube top=rhombus, left=dark parallelogram, right=medium -->
-        <!-- Row 0 (apex), 1 cube -->
-        <!-- top -->
-        <polygon points="200,80  232,98  200,116  168,98"  fill="#6644cc"/>
-        <!-- right -->
-        <polygon points="200,116 232,98  232,134  200,152" fill="#4422aa"/>
-        <!-- left -->
-        <polygon points="200,116 168,98  168,134  200,152" fill="#2a1266"/>
-
-        <!-- Row 1, 2 cubes -->
-        <!-- cube (0,1) -->
-        <polygon points="168,116 200,98  200,116  168,134" fill="#6644cc" opacity="0.9"/><!-- actually top -->
-        <polygon points="168,98  200,80  200,116  168,116" fill="#6644cc" opacity="0.5"/>
-
-        <polygon points="168,134 200,116 200,152 168,170" fill="#2a1266"/>
-        <polygon points="200,116 232,134 232,170 200,152" fill="#4422aa" opacity="0.7"/>
-        <!-- cube top -->
-        <polygon points="136,116 168,98  200,116  168,134" fill="#5533bb"/>
-        <!-- right -->
-        <polygon points="168,134 200,116 200,152 168,170" fill="#2a1266"/>
-        <!-- cube 2 top -->
-        <polygon points="200,116 232,98  264,116  232,134" fill="#5533bb"/>
-        <polygon points="232,134 264,116 264,152 232,170" fill="#2a1266"/>
-        <polygon points="200,152 232,134 232,170 200,186" fill="#3a2288"/>
-
-        <!-- Row 2, 3 cubes — lit gold color -->
-        <polygon points="104,134 136,116 168,134 136,152" fill="#c07800"/>
-        <polygon points="136,152 168,134 168,170 136,188" fill="#7a4a00"/>
-        <polygon points="104,170 136,152 136,188 104,206" fill="#503000"/>
-
-        <polygon points="168,134 200,116 232,134 200,152" fill="#dd9900"/>
-        <polygon points="200,152 232,134 232,170 200,188" fill="#8a5500"/>
-        <polygon points="168,170 200,152 200,188 168,206" fill="#6a4000"/>
-
-        <polygon points="232,134 264,116 296,134 264,152" fill="#c07800"/>
-        <polygon points="264,152 296,134 296,170 264,188" fill="#7a4a00"/>
-        <polygon points="232,170 264,152 264,188 232,206" fill="#503000"/>
-
-        <!-- Row 3, 4 cubes — unlit purple -->
-        <polygon points="72,152  104,134 136,152 104,170" fill="#4422aa"/>
-        <polygon points="104,170 136,152 136,188 104,206" fill="#221155"/>
-        <polygon points="72,188  104,170 104,206 72,224"  fill="#1a0d44"/>
-
-        <polygon points="136,152 168,134 200,152 168,170" fill="#5533bb"/>
-        <polygon points="168,170 200,152 200,188 168,206" fill="#2a1266"/>
-        <polygon points="136,188 168,170 168,206 136,224" fill="#1e0d50"/>
-
-        <polygon points="200,152 232,134 264,152 232,170" fill="#4422aa"/>
-        <polygon points="232,170 264,152 264,188 232,206" fill="#221155"/>
-        <polygon points="200,188 232,170 232,206 200,224" fill="#1a0d44"/>
-
-        <polygon points="264,152 296,134 328,152 296,170" fill="#5533bb"/>
-        <polygon points="296,170 328,152 328,188 296,206" fill="#2a1266"/>
-        <polygon points="264,188 296,170 296,206 264,224" fill="#1e0d50"/>
-
-        <!-- Enemy (red sphere) -->
-        <circle cx="264" cy="140" r="13" fill="#ff2244"/>
-        <circle cx="260" cy="136" r="4" fill="#fff" opacity="0.9"/>
-        <circle cx="268" cy="136" r="4" fill="#fff" opacity="0.9"/>
-        <circle cx="261" cy="137" r="2" fill="#111"/>
-        <circle cx="269" cy="137" r="2" fill="#111"/>
-
-        <!-- Q*bert (orange sphere on apex) -->
-        <ellipse cx="200" cy="78" rx="13" ry="6" fill="#000" opacity="0.35"/>
-        <circle cx="200" cy="66" r="16" fill="url(#qball)"/>
-        <ellipse cx="195" cy="60" rx="5" ry="3.5" fill="#ffe0aa" opacity="0.4" transform="rotate(-15,195,60)"/>
-        <circle cx="194" cy="62" r="3.2" fill="#fff"/>
-        <circle cx="206" cy="61" r="3.2" fill="#fff"/>
-        <circle cx="195" cy="63" r="1.6" fill="#111"/>
-        <circle cx="207" cy="62" r="1.6" fill="#111"/>
-        <!-- Nose -->
-        <ellipse cx="200" cy="69" rx="3" ry="2.2" fill="#ff5500"/>
-
         <!-- Stars -->
-        <circle cx="50"  cy="30"  r="1.2" fill="#fff" opacity="0.6"/>
-        <circle cx="340" cy="50"  r="1"   fill="#fff" opacity="0.5"/>
-        <circle cx="370" cy="20"  r="0.8" fill="#fff" opacity="0.4"/>
-        <circle cx="30"  cy="340" r="1"   fill="#fff" opacity="0.3"/>
-        <circle cx="360" cy="360" r="1.2" fill="#fff" opacity="0.4"/>
+        <circle cx="50"  cy="28"  r="1.2" fill="#fff" opacity="0.5"/>
+        <circle cx="338" cy="44"  r="1"   fill="#fff" opacity="0.4"/>
+        <circle cx="366" cy="18"  r="0.8" fill="#fff" opacity="0.4"/>
+        <circle cx="30"  cy="336" r="1"   fill="#fff" opacity="0.3"/>
+        <circle cx="358" cy="358" r="1.2" fill="#fff" opacity="0.3"/>
+        <circle cx="80"  cy="340" r="0.8" fill="#fff" opacity="0.3"/>
+
+        <!-- ── ROW 6 (bottom, 7 cubes) — unlit purple ── -->
+        <!-- c=0 sx=68 sy=248 -->
+        <polygon points="46,248 68,237 90,248 68,259"   fill="#5533cc"/><polygon points="90,248 68,259 68,281 90,270"   fill="#3a1f9c"/><polygon points="46,248 68,259 68,281 46,270"   fill="#1e0f5a"/>
+        <!-- c=1 sx=112 -->
+        <polygon points="90,248 112,237 134,248 112,259" fill="#5533cc"/><polygon points="134,248 112,259 112,281 134,270" fill="#3a1f9c"/><polygon points="90,248 112,259 112,281 90,270"   fill="#1e0f5a"/>
+        <!-- c=2 sx=156 -->
+        <polygon points="134,248 156,237 178,248 156,259" fill="#5533cc"/><polygon points="178,248 156,259 156,281 178,270" fill="#3a1f9c"/><polygon points="134,248 156,259 156,281 134,270" fill="#1e0f5a"/>
+        <!-- c=3 sx=200 -->
+        <polygon points="178,248 200,237 222,248 200,259" fill="#5533cc"/><polygon points="222,248 200,259 200,281 222,270" fill="#3a1f9c"/><polygon points="178,248 200,259 200,281 178,270" fill="#1e0f5a"/>
+        <!-- c=4 sx=244 -->
+        <polygon points="222,248 244,237 266,248 244,259" fill="#5533cc"/><polygon points="266,248 244,259 244,281 266,270" fill="#3a1f9c"/><polygon points="222,248 244,259 244,281 222,270" fill="#1e0f5a"/>
+        <!-- c=5 sx=288 -->
+        <polygon points="266,248 288,237 310,248 288,259" fill="#5533cc"/><polygon points="310,248 288,259 288,281 310,270" fill="#3a1f9c"/><polygon points="266,248 288,259 288,281 266,270" fill="#1e0f5a"/>
+        <!-- c=6 sx=332 -->
+        <polygon points="310,248 332,237 354,248 332,259" fill="#5533cc"/><polygon points="354,248 332,259 332,281 354,270" fill="#3a1f9c"/><polygon points="310,248 332,259 332,281 310,270" fill="#1e0f5a"/>
+
+        <!-- ── ROW 5 (6 cubes) — unlit ── -->
+        <!-- c=0 sx=90 sy=215 -->
+        <polygon points="68,215 90,204 112,215 90,226"   fill="#5533cc"/><polygon points="112,215 90,226 90,248 112,237"   fill="#3a1f9c"/><polygon points="68,215 90,226 90,248 68,237"   fill="#1e0f5a"/>
+        <!-- c=1 sx=134 -->
+        <polygon points="112,215 134,204 156,215 134,226" fill="#5533cc"/><polygon points="156,215 134,226 134,248 156,237" fill="#3a1f9c"/><polygon points="112,215 134,226 134,248 112,237" fill="#1e0f5a"/>
+        <!-- c=2 sx=178 -->
+        <polygon points="156,215 178,204 200,215 178,226" fill="#5533cc"/><polygon points="200,215 178,226 178,248 200,237" fill="#3a1f9c"/><polygon points="156,215 178,226 178,248 156,237" fill="#1e0f5a"/>
+        <!-- c=3 sx=222 -->
+        <polygon points="200,215 222,204 244,215 222,226" fill="#5533cc"/><polygon points="244,215 222,226 222,248 244,237" fill="#3a1f9c"/><polygon points="200,215 222,226 222,248 200,237" fill="#1e0f5a"/>
+        <!-- c=4 sx=266 -->
+        <polygon points="244,215 266,204 288,215 266,226" fill="#5533cc"/><polygon points="288,215 266,226 266,248 288,237" fill="#3a1f9c"/><polygon points="244,215 266,226 266,248 244,237" fill="#1e0f5a"/>
+        <!-- c=5 sx=310 -->
+        <polygon points="288,215 310,204 332,215 310,226" fill="#5533cc"/><polygon points="332,215 310,226 310,248 332,237" fill="#3a1f9c"/><polygon points="288,215 310,226 310,248 288,237" fill="#1e0f5a"/>
+
+        <!-- ── ROW 4 (5 cubes) — unlit ── -->
+        <!-- c=0 sx=112 sy=182 -->
+        <polygon points="90,182 112,171 134,182 112,193"   fill="#5533cc"/><polygon points="134,182 112,193 112,215 134,204"   fill="#3a1f9c"/><polygon points="90,182 112,193 112,215 90,204"   fill="#1e0f5a"/>
+        <!-- c=1 sx=156 -->
+        <polygon points="134,182 156,171 178,182 156,193" fill="#5533cc"/><polygon points="178,182 156,193 156,215 178,204" fill="#3a1f9c"/><polygon points="134,182 156,193 156,215 134,204" fill="#1e0f5a"/>
+        <!-- c=2 sx=200 -->
+        <polygon points="178,182 200,171 222,182 200,193" fill="#5533cc"/><polygon points="222,182 200,193 200,215 222,204" fill="#3a1f9c"/><polygon points="178,182 200,193 200,215 178,204" fill="#1e0f5a"/>
+        <!-- c=3 sx=244 — danger tile -->
+        <polygon points="222,182 244,171 266,182 244,193" fill="#dd2200"/><polygon points="266,182 244,193 244,215 266,204" fill="#881100"/><polygon points="222,182 244,193 244,215 222,204" fill="#550000"/>
+        <!-- c=4 sx=288 -->
+        <polygon points="266,182 288,171 310,182 288,193" fill="#5533cc"/><polygon points="310,182 288,193 288,215 310,204" fill="#3a1f9c"/><polygon points="266,182 288,193 288,215 266,204" fill="#1e0f5a"/>
+
+        <!-- ── ROW 3 (4 cubes) — enemy on c=2 ── -->
+        <!-- c=0 sx=134 sy=149 — unlit -->
+        <polygon points="112,149 134,138 156,149 134,160" fill="#5533cc"/><polygon points="156,149 134,160 134,182 156,171" fill="#3a1f9c"/><polygon points="112,149 134,160 134,182 112,171" fill="#1e0f5a"/>
+        <!-- c=1 sx=178 — lit gold -->
+        <polygon points="156,149 178,138 200,149 178,160" fill="#f0a020"/><polygon points="200,149 178,160 178,182 200,171" fill="#b06800"/><polygon points="156,149 178,160 178,182 156,171" fill="#704000"/>
+        <!-- c=2 sx=222 — unlit -->
+        <polygon points="200,149 222,138 244,149 222,160" fill="#5533cc"/><polygon points="244,149 222,160 222,182 244,171" fill="#3a1f9c"/><polygon points="200,149 222,160 222,182 200,171" fill="#1e0f5a"/>
+        <!-- c=3 sx=266 — unlit -->
+        <polygon points="244,149 266,138 288,149 266,160" fill="#5533cc"/><polygon points="288,149 266,160 266,182 288,171" fill="#3a1f9c"/><polygon points="244,149 266,160 266,182 244,171" fill="#1e0f5a"/>
+        <!-- Enemy red ball on c=2,r=3 -->
+        <ellipse cx="222" cy="150" rx="11" ry="5" fill="#000" opacity="0.3"/>
+        <circle cx="222" cy="140" r="13" fill="#ff2244"/>
+        <circle cx="218" cy="136" r="3.5" fill="#fff"/><circle cx="226" cy="136" r="3.5" fill="#fff"/>
+        <circle cx="219" cy="137" r="1.8" fill="#111"/><circle cx="227" cy="137" r="1.8" fill="#111"/>
+
+        <!-- ── ROW 2 (3 cubes) — all lit gold ── -->
+        <!-- c=0 sx=156 sy=116 -->
+        <polygon points="134,116 156,105 178,116 156,127" fill="#f0a020"/><polygon points="178,116 156,127 156,149 178,138" fill="#b06800"/><polygon points="134,116 156,127 156,149 134,138" fill="#704000"/>
+        <!-- c=1 sx=200 -->
+        <polygon points="178,116 200,105 222,116 200,127" fill="#f0a020"/><polygon points="222,116 200,127 200,149 222,138" fill="#b06800"/><polygon points="178,116 200,127 200,149 178,138" fill="#704000"/>
+        <!-- c=2 sx=244 -->
+        <polygon points="222,116 244,105 266,116 244,127" fill="#f0a020"/><polygon points="266,116 244,127 244,149 266,138" fill="#b06800"/><polygon points="222,116 244,127 244,149 222,138" fill="#704000"/>
+
+        <!-- ── ROW 1 (2 cubes) — lit ── -->
+        <!-- c=0 sx=178 sy=83 -->
+        <polygon points="156,83 178,72 200,83 178,94"   fill="#f0a020"/><polygon points="200,83 178,94 178,116 200,105"   fill="#b06800"/><polygon points="156,83 178,94 178,116 156,105"   fill="#704000"/>
+        <!-- c=1 sx=222 -->
+        <polygon points="200,83 222,72 244,83 222,94"   fill="#f0a020"/><polygon points="244,83 222,94 222,116 244,105"   fill="#b06800"/><polygon points="200,83 222,94 222,116 200,105"   fill="#704000"/>
+
+        <!-- ── ROW 0 apex (1 cube) — lit ── -->
+        <!-- c=0 sx=200 sy=50 -->
+        <polygon points="178,50 200,39 222,50 200,61" fill="#f0a020"/><polygon points="222,50 200,61 200,83 222,72" fill="#b06800"/><polygon points="178,50 200,61 200,83 178,72" fill="#704000"/>
+
+        <!-- Q*bert on apex (sx=200, sy=50) -->
+        <ellipse cx="200" cy="43" rx="11" ry="5" fill="#000" opacity="0.35"/>
+        <circle cx="200" cy="31" r="14" fill="url(#qball)"/>
+        <ellipse cx="194" cy="26" rx="5" ry="3" fill="#fff8dd" opacity="0.38" transform="rotate(-18,194,26)"/>
+        <circle cx="194" cy="28" r="3"   fill="#fff"/><circle cx="205" cy="27" r="3"   fill="#fff"/>
+        <circle cx="195" cy="29" r="1.5" fill="#111"/><circle cx="206" cy="28" r="1.5" fill="#111"/>
+        <ellipse cx="200" cy="34" rx="2.8" ry="2" fill="#ff5500"/>
       </svg>
       <div class="pills">
         <span class="pill pill-name">Q*HOPPER</span>
@@ -285,100 +382,136 @@
 
     <!-- ── Bug Splat ── -->
     <a href="./bug-splat/" class="card">
-      <!-- Top-down road with bugs on windshield -->
+      <!--
+        Top-down road scrolling game. The splat canvas covers the WHOLE screen —
+        bug goo obscures your view as you drive further. Pixel-art retro look.
+      -->
       <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#0a0a0a"/>
-            <stop offset="100%" stop-color="#161616"/>
-          </linearGradient>
-          <radialGradient id="splat1" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#44cc22" stop-opacity="0.9"/>
-            <stop offset="70%" stop-color="#228800" stop-opacity="0.6"/>
+          <!-- Splat gradients bleed out from impact point like real goo -->
+          <radialGradient id="gs1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#66ee22" stop-opacity="1"/>
+            <stop offset="50%"  stop-color="#33aa00" stop-opacity="0.7"/>
             <stop offset="100%" stop-color="#114400" stop-opacity="0"/>
           </radialGradient>
-          <radialGradient id="splat2" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#66ee33" stop-opacity="0.85"/>
-            <stop offset="60%" stop-color="#33aa11" stop-opacity="0.5"/>
+          <radialGradient id="gs2" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#aaff44" stop-opacity="0.9"/>
+            <stop offset="55%"  stop-color="#44bb00" stop-opacity="0.6"/>
             <stop offset="100%" stop-color="#114400" stop-opacity="0"/>
           </radialGradient>
-          <radialGradient id="headlights" cx="50%" cy="100%" r="80%">
-            <stop offset="0%" stop-color="#ffffcc" stop-opacity="0.7"/>
-            <stop offset="100%" stop-color="#ffffcc" stop-opacity="0"/>
+          <radialGradient id="gs3" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#55dd11" stop-opacity="0.85"/>
+            <stop offset="60%"  stop-color="#226600" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#114400" stop-opacity="0"/>
           </radialGradient>
         </defs>
 
-        <!-- Road surface -->
-        <rect width="400" height="400" fill="url(#road)"/>
+        <!-- Grass shoulders -->
+        <rect width="400" height="400" fill="#0a110a"/>
+        <!-- Road surface — 3 lanes -->
+        <rect x="62" y="0" width="276" height="400" fill="#141414"/>
+        <!-- Curb stripes alternating red/white -->
+        <rect x="58" y="0"   width="8" height="40"  fill="#cc1100"/><rect x="58" y="40"  width="8" height="40" fill="#eeeeee"/>
+        <rect x="58" y="80"  width="8" height="40"  fill="#cc1100"/><rect x="58" y="120" width="8" height="40" fill="#eeeeee"/>
+        <rect x="58" y="160" width="8" height="40"  fill="#cc1100"/><rect x="58" y="200" width="8" height="40" fill="#eeeeee"/>
+        <rect x="58" y="240" width="8" height="40"  fill="#cc1100"/><rect x="58" y="280" width="8" height="40" fill="#eeeeee"/>
+        <rect x="58" y="320" width="8" height="40"  fill="#cc1100"/><rect x="58" y="360" width="8" height="40" fill="#eeeeee"/>
+        <rect x="334" y="0"   width="8" height="40" fill="#cc1100"/><rect x="334" y="40"  width="8" height="40" fill="#eeeeee"/>
+        <rect x="334" y="80"  width="8" height="40" fill="#cc1100"/><rect x="334" y="120" width="8" height="40" fill="#eeeeee"/>
+        <rect x="334" y="160" width="8" height="40" fill="#cc1100"/><rect x="334" y="200" width="8" height="40" fill="#eeeeee"/>
+        <rect x="334" y="240" width="8" height="40" fill="#cc1100"/><rect x="334" y="280" width="8" height="40" fill="#eeeeee"/>
+        <rect x="334" y="320" width="8" height="40" fill="#cc1100"/><rect x="334" y="360" width="8" height="40" fill="#eeeeee"/>
 
-        <!-- Road edges / curbs -->
-        <rect x="0"   y="0" width="60"  height="400" fill="#0d1a0d"/>
-        <rect x="340" y="0" width="60"  height="400" fill="#0d1a0d"/>
-        <!-- Curb markings -->
-        <rect x="58"  y="0" width="3" height="400" fill="#ffffff" opacity="0.08"/>
-        <rect x="339" y="0" width="3" height="400" fill="#ffffff" opacity="0.08"/>
+        <!-- Lane divider dashes -->
+        <rect x="153" y="0"   width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="52"  width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="104" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="156" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="208" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="260" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="312" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="153" y="364" width="4" height="36" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="0"   width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="52"  width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="104" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="156" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="208" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="260" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="312" width="4" height="34" fill="#eeee00" opacity="0.7"/>
+        <rect x="243" y="364" width="4" height="36" fill="#eeee00" opacity="0.7"/>
 
-        <!-- Lane dashes -->
-        <rect x="130" y="0"   width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="130" y="90"  width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="130" y="180" width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="130" y="270" width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="130" y="360" width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="267" y="0"   width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="267" y="90"  width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="267" y="180" width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="267" y="270" width="3" height="60"  fill="#fff" opacity="0.15"/>
-        <rect x="267" y="360" width="3" height="60"  fill="#fff" opacity="0.15"/>
+        <!-- Player car (top-down, center lane, near bottom) -->
+        <!-- body -->
+        <rect x="168" y="308" width="64" height="82" rx="4" fill="#1a2a6e"/>
+        <!-- hood/roof -->
+        <rect x="176" y="316" width="48" height="62" rx="3" fill="#2235a0"/>
+        <!-- windshield (front) -->
+        <rect x="180" y="318" width="40" height="20" rx="2" fill="#aaccff" opacity="0.6"/>
+        <!-- rear window -->
+        <rect x="180" y="362" width="40" height="14" rx="2" fill="#aaccff" opacity="0.35"/>
+        <!-- headlights -->
+        <rect x="170" y="308" width="14" height="8" rx="1" fill="#ffffaa"/>
+        <rect x="216" y="308" width="14" height="8" rx="1" fill="#ffffaa"/>
+        <!-- tail lights -->
+        <rect x="170" y="378" width="14" height="8" rx="1" fill="#ff2200"/>
+        <rect x="216" y="378" width="14" height="8" rx="1" fill="#ff2200"/>
+        <!-- wheels -->
+        <rect x="162" y="316" width="10" height="18" rx="2" fill="#111"/>
+        <rect x="228" y="316" width="10" height="18" rx="2" fill="#111"/>
+        <rect x="162" y="358" width="10" height="18" rx="2" fill="#111"/>
+        <rect x="228" y="358" width="10" height="18" rx="2" fill="#111"/>
 
-        <!-- Headlight glow from car -->
-        <rect x="61" y="260" width="278" height="140" fill="url(#headlights)"/>
+        <!-- Live bugs flying toward car -->
+        <!-- Bug A — big, center lane -->
+        <ellipse cx="200" cy="216" rx="10" ry="7" fill="#44cc22"/>
+        <ellipse cx="186" cy="214" rx="8"  ry="4" fill="#55dd33" opacity="0.75" transform="rotate(-28,186,214)"/>
+        <ellipse cx="214" cy="218" rx="8"  ry="4" fill="#55dd33" opacity="0.75" transform="rotate(28,214,218)"/>
+        <ellipse cx="200" cy="216" rx="4"  ry="6" fill="#1a5500"/>
+        <circle  cx="197" cy="212" r="2"   fill="#fff" opacity="0.8"/>
+        <circle  cx="203" cy="212" r="2"   fill="#fff" opacity="0.8"/>
+        <!-- Bug B — left lane -->
+        <ellipse cx="130" cy="170" rx="8"  ry="5.5" fill="#55cc33"/>
+        <ellipse cx="118" cy="168" rx="6"  ry="3"   fill="#66dd44" opacity="0.7" transform="rotate(-25,118,168)"/>
+        <ellipse cx="142" cy="172" rx="6"  ry="3"   fill="#66dd44" opacity="0.7" transform="rotate(25,142,172)"/>
+        <ellipse cx="130" cy="170" rx="3"  ry="5"   fill="#1a5500"/>
+        <!-- Bug C — right lane -->
+        <ellipse cx="284" cy="240" rx="7"  ry="5"   fill="#44bb22"/>
+        <ellipse cx="273" cy="238" rx="6"  ry="3"   fill="#55cc33" opacity="0.7" transform="rotate(-22,273,238)"/>
+        <ellipse cx="295" cy="242" rx="6"  ry="3"   fill="#55cc33" opacity="0.7" transform="rotate(22,295,242)"/>
+        <ellipse cx="284" cy="240" rx="3"  ry="4.5" fill="#1a5500"/>
+        <!-- Bug D — small, far away -->
+        <ellipse cx="170" cy="110" rx="5"  ry="3.5" fill="#66dd33"/>
+        <ellipse cx="162" cy="109" rx="4"  ry="2"   fill="#77ee44" opacity="0.7" transform="rotate(-20,162,109)"/>
+        <ellipse cx="178" cy="111" rx="4"  ry="2"   fill="#77ee44" opacity="0.7" transform="rotate(20,178,111)"/>
+        <!-- Bug E — small, far away right -->
+        <ellipse cx="258" cy="140" rx="5"  ry="3.5" fill="#55cc22"/>
+        <ellipse cx="250" cy="139" rx="4"  ry="2"   fill="#66dd33" opacity="0.7" transform="rotate(-20,250,139)"/>
+        <ellipse cx="266" cy="141" rx="4"  ry="2"   fill="#66dd33" opacity="0.7" transform="rotate(20,266,141)"/>
 
-        <!-- Car (top-down view) -->
-        <rect x="150" y="290" width="100" height="80"  rx="6" fill="#1a1a2e"/>
-        <rect x="158" y="296" width="84"  height="68"  rx="4" fill="#222244"/>
-        <!-- Windshield -->
-        <rect x="162" y="298" width="76"  height="28"  rx="3" fill="#2a3a5a" opacity="0.9"/>
-        <!-- Tail lights -->
-        <rect x="152" y="358" width="22" height="8" rx="2" fill="#ff2200" opacity="0.9"/>
-        <rect x="226" y="358" width="22" height="8" rx="2" fill="#ff2200" opacity="0.9"/>
-
-        <!-- Bug splats on windshield -->
-        <!-- Big splat center -->
-        <circle cx="200" cy="310" r="18" fill="url(#splat1)"/>
-        <ellipse cx="200" cy="310" rx="6"  ry="4"  fill="#55ff22" opacity="0.6" transform="rotate(30,200,310)"/>
-        <ellipse cx="207" cy="305" rx="4"  ry="2"  fill="#88ff44" opacity="0.5" transform="rotate(-20,207,305)"/>
-        <ellipse cx="193" cy="315" rx="3"  ry="2"  fill="#44cc11" opacity="0.6"/>
-        <!-- Bug body remnants -->
-        <ellipse cx="200" cy="310" rx="3"  ry="4.5" fill="#1a5500" opacity="0.8"/>
-        <ellipse cx="197" cy="308" rx="2"  ry="1"   fill="#226600" opacity="0.7" transform="rotate(-40,197,308)"/>
-        <ellipse cx="203" cy="312" rx="2"  ry="1"   fill="#226600" opacity="0.7" transform="rotate(40,203,312)"/>
-
-        <!-- Small splat top-left of windshield -->
-        <circle cx="172" cy="302" r="10" fill="url(#splat2)"/>
-        <ellipse cx="172" cy="302" rx="3"  ry="4"  fill="#1a4400" opacity="0.8"/>
-        <ellipse cx="169" cy="300" rx="2"  ry="1"  fill="#33aa00" opacity="0.6" transform="rotate(-50,169,300)"/>
-        <ellipse cx="175" cy="304" rx="2"  ry="1"  fill="#33aa00" opacity="0.6" transform="rotate(50,175,304)"/>
-
-        <!-- Small splat top-right -->
-        <circle cx="226" cy="306" r="8" fill="url(#splat2)" opacity="0.8"/>
-        <ellipse cx="226" cy="306" rx="2.5" ry="3.5" fill="#1a4400" opacity="0.7"/>
-
-        <!-- Bugs in air (approaching) -->
-        <!-- Bug 1 -->
-        <ellipse cx="140" cy="210" rx="6"  ry="4"  fill="#44bb22"/>
-        <ellipse cx="134" cy="209" rx="4"  ry="2"  fill="#44bb22" opacity="0.7" transform="rotate(-30,134,209)"/>
-        <ellipse cx="146" cy="211" rx="4"  ry="2"  fill="#44bb22" opacity="0.7" transform="rotate(30,146,211)"/>
-        <ellipse cx="140" cy="210" rx="2"  ry="3"  fill="#1a5500"/>
-        <!-- Bug 2 -->
-        <ellipse cx="260" cy="180" rx="5"  ry="3.5" fill="#55cc33"/>
-        <ellipse cx="254" cy="179" rx="3.5" ry="1.8" fill="#55cc33" opacity="0.7" transform="rotate(-25,254,179)"/>
-        <ellipse cx="266" cy="181" rx="3.5" ry="1.8" fill="#55cc33" opacity="0.7" transform="rotate(25,266,181)"/>
-        <ellipse cx="260" cy="180" rx="1.8" ry="2.8" fill="#1a5500"/>
-        <!-- Bug 3 -->
-        <ellipse cx="195" cy="235" rx="5"  ry="3.5" fill="#44bb22"/>
-        <ellipse cx="189" cy="234" rx="3.5" ry="1.8" fill="#44bb22" opacity="0.7" transform="rotate(-28,189,234)"/>
-        <ellipse cx="201" cy="236" rx="3.5" ry="1.8" fill="#44bb22" opacity="0.7" transform="rotate(28,201,236)"/>
-        <ellipse cx="195" cy="235" rx="1.8" ry="2.8" fill="#1a5500"/>
+        <!-- Bug splats coating the whole screen (windshield overlay) -->
+        <!-- Large center splat -->
+        <circle cx="202" cy="80"  r="28" fill="url(#gs1)"/>
+        <ellipse cx="202" cy="80"  rx="8"  ry="5"  fill="#55ff22" opacity="0.55" transform="rotate(30,202,80)"/>
+        <ellipse cx="210" cy="74"  rx="5"  ry="2.5" fill="#aaff55" opacity="0.5" transform="rotate(-20,210,74)"/>
+        <ellipse cx="202" cy="80"  rx="3.5" ry="6"  fill="#1a5500" opacity="0.85"/>
+        <ellipse cx="198" cy="77"  rx="2.5" ry="1.2" fill="#33aa00" opacity="0.7" transform="rotate(-38,198,77)"/>
+        <ellipse cx="206" cy="83"  rx="2.5" ry="1.2" fill="#33aa00" opacity="0.7" transform="rotate(42,206,83)"/>
+        <!-- Splat top-left -->
+        <circle cx="102" cy="48"  r="18" fill="url(#gs2)"/>
+        <ellipse cx="102" cy="48"  rx="4"  ry="6"  fill="#1a5500" opacity="0.8"/>
+        <ellipse cx="98"  cy="44"  rx="2"  ry="1"  fill="#44bb00" opacity="0.6" transform="rotate(-45,98,44)"/>
+        <ellipse cx="106" cy="52"  rx="2"  ry="1"  fill="#44bb00" opacity="0.6" transform="rotate(45,106,52)"/>
+        <!-- Splat right -->
+        <circle cx="316" cy="130" r="22" fill="url(#gs1)" opacity="0.9"/>
+        <ellipse cx="316" cy="130" rx="5"  ry="7.5" fill="#1a5500" opacity="0.8"/>
+        <!-- Small splats scattered -->
+        <circle cx="142" cy="192" r="12" fill="url(#gs3)"/>
+        <ellipse cx="142" cy="192" rx="3"  ry="4.5" fill="#1a5500" opacity="0.75"/>
+        <circle cx="274" cy="62"  r="10" fill="url(#gs2)" opacity="0.85"/>
+        <ellipse cx="274" cy="62"  rx="2.5" ry="4" fill="#1a5500" opacity="0.7"/>
+        <circle cx="338" cy="280" r="9"  fill="url(#gs3)" opacity="0.8"/>
+        <circle cx="82"  cy="290" r="8"  fill="url(#gs2)" opacity="0.7"/>
+        <circle cx="232" cy="30"  r="7"  fill="url(#gs1)" opacity="0.8"/>
       </svg>
       <div class="pills">
         <span class="pill pill-name">Bug Splat</span>
